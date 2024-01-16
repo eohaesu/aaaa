@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:src="@{/static/js/common/validate.js}"></script>
+<script th:inline="javascript">
+	/* 전역변수 */
+	let reqAuthInfoFail = 0;	// 타인인증 입력정보 불일치 횟수 (3회 실패시 콜봇으로 전환)
+	let confAuthFail = 0;		// 타인인증 확인 실패 횟수 (3회 실패시 콜봇으로 전환)
+	let sendAuthNoYn = false;  	// 타인인증 인증번호 발송여부
+	let confAuthNoYn = false; 	// 타인인증 인증번호 확인여부
+	let reqAuthPossible = true; // 타인인증 요청 가능여부
+	let reqTimerStart = null;	// 타인인증 요청 타이머 (요청 후 1분 후 재요청 가능)
+	let inputTimerStart = null; // 타인인증 입력 타이머 (제한 3분)
+
+	let verifyAcctSuccess = false;  // 실명확인 계좌인증 완료여부
+	let verifyAcctFail = 0;         // 실명확인 계좌인증 실패횟수 (3회 실패시 콜봇으로 전환)
+	
+	const payAmt = sessionStorage.getItem("payAmount");
+	
+	// 타인인증 인증번호 요청 타이머
+	const authReqTimer = ()=>{
+		let time=60000;			  // 타임아웃
+		
+		reqTimerStart = setInterval(()=>{
+			reqAuthPossible = false;
+			time = time-1000;
+			
+			if(time == 0) {
+				clearInterval(reqTimerStart);
+				reqAuthPossible = true;
+				return true;
+			}
+		}, 1000);
+	};
+
+	// 타인인증 인증번호 입력 타이머
+	const authInpTimer = ()=>{
+		let time=180000;		  // 인증번호 3분 타임아웃
+		let min=3;                // 인증번호 타이머 분
+		let sec=60;               // 인증번호 타이머 초
+		
+		inputTimerStart = setInterval(()=>{
+			time = time-1000;
+			min = Math.floor(time/60000);
+			sec = Math.floor((time-(min*60000))/1000);
+			
+			if(sec.toString().length == 1) {
+				sec = "0"+sec;
+			} 
+			
+			let str = min + ":" + sec;
+			
+			$('#remainTime').text(str);
+			
+			if(time == 0) {
+				clearInterval(inputTimerStart);
+				$('#authTimer').addClass('hidden');
+				$('#authNo').closest('div').addClass('error');
+				$('#authNo').closest('div').nextAll('.time-error').removeClass('hidden');
+				$('#confAuthNo').attr('disabled', true); // 인증하기 버튼 비활성화
+				$('#extendTime').attr('disabled', true); // 시간연장하기 버튼 비활성화
+				return false;
+			}
+		}, 1000);
+	};
+	
+	// 신용카드 납부
+	const payForCard = function() {
+		
+		const params = {
+			cardNo : $('#cardNo').val().replace(/-/g, ""),
+			cardCd : $('#cardCompCd').val(),
+			cardValdEndYymm : $('#expPeriod').val().replace(/\//g, ""),
+			cardInst : '',
+			cardOwnNm : '',
+			custRnno : '',
+			custBasKdCd : $('input:radio[name=custType]:checked').val(),
+			custDetlKdCd : '',
+			brno : '',
+			payAmt : payAmt
+		};
+
+		let url = "";
+		let cardComp = $('#cardComp').val();						// 카드사
+		let cardOwn = $('input:radio[name=Card]:checked').val();	// 카드소유자
+		
+		if((cardComp=="신한카드" && payAmt >=30000) || payAmt >= 50000) {
+			params.cardInst = $('#instPeriod option:selected').val();
+		} else {
+			params.cardInst = "0";
+		}
+
+		if(cardOwn == "ownCard") {	// 신용카드(본인)
+			url = "/payment/myPayCharge";
+			params.cardOwnNm = $('#custNm').val();
+
+			if($('input:radio[name=custType]:checked').val() == 20) {   // 개인사업자인 경우
+				params.custDetlKdCd = "21";
+                params.brno = $('#businessNo').val();	// 사업자번호
+            } else {
+				params.custDetlKdCd = $('input:radio[name=cardholder]:checked').val();
+				params.custRnno = validate.genderTypeCheck($('#birth').val(), $('input:radio[name=gender]:checked').val(), $('input:radio[name=cardholder]:checked').val());
+            }
+		} else {	// 신용카드(타인)
+			url = "/payment/othersPayCharge";
+			params.custNm = $('#cardOwnNm').val();
+
+			if($('input:radio[name=custType]:checked').val() == 20) {   // 개인사업자인 경우
+				params.custDetlKdCd = "21";
+                params.brno = $('#businessNo').val();	// 사업자번호
+            } else {
+				params.custDetlKdCd = $('input:radio[name=cardholder]:checked').val();
+				params.custRnno = validate.genderTypeCheck($('#ownBirth').val(), $('input:radio[name=gender]:checked').val(), $('input:radio[name=cardholder]:checked').val());
+            }
+		}
+		
+		$.ajax({
+			url : contextPath + url,
+			type : "POST",
+			dataType : "json",
+			data : params,
+			success : function(data) {
+				if(data.ccrdStlmAprvRsltCd != undefined && data.ccrdStlmAprvRsltCd != null && data.ccrdStlmAprvRsltCd == "00") {
+					location.replace(contextPath + "/payment/p0003");	// 납부완료화면
+				} else {
+					location.replace(contextPath + "/payment/p0004");	// 납부실패화면
+				}
+				
+			},
+			error : function(jqXHR, textStatus, errorThrown) {
+				location.replace(contextPath + "/payment/p0004");	// 납부실패화면
+			}
+		});
+	};
+
+	// 실시간 출금
+	const payForWthd = function() {
+		$.ajax({
+			url : contextPath + "/payment/payWithdraw",
+			type : "POST",
+			dataType : "json",
+			data : {
+				rtwdAprvRqstAmt : payAmt,
+				totalAmt : payAmt,
+				bankAcctNo : $('#wthdAcctNum').val(),								// 계좌번호
+				custBankCd : $('#bankList option:selected').attr('data-bankCd'),	// 은행코드
+				paymCustNm : $('#wthdAcctOwner').val()								// 예금주명
+			},
+			success : function(data) {
+				if(data) {
+					location.replace(contextPath + "/payment/p0003");	// 납부완료화면
+				} else {
+					location.replace(contextPath + "/payment/p0004");	// 납부실패화면
+				}
+			},
+			error : function(jqXHR, textStatus, errorThrown) {
+				location.replace(contextPath + "/payment/p0004");	// 납부실패화면
+			}
+		})
+	};
+
+	// 카드정보 입력값 체크
+	const cardInputCheck = function(obj) {
+		let noInputCount = 0;
+		
+		type = $('input:radio[name=Card]:checked').val() == "ownCard" ? "d-ownInputCk" : "d-otherInputCk"; 
+		
+		// 현재 입력값 체크
+		if(obj != null) {
+			if(confAuthNoYn && (obj == cardOwnNm || obj == ownBirth)) {
+				// 인증 관련 필수값 변경 시 재인증 받아야 함
+				authNoClear();			// 인증번호 관련 초기화
+				$('#phoneNo').val("");	// 휴대폰번호 초기화
+			}
+
+			if(validate.isEmpty($(obj).val()) || (obj != expPeriod && obj != custNm && obj != cardOwnNm && $(obj).is('[maxlength]') && $(obj).val().length != $(obj).attr('maxlength'))) {
+				$(obj).closest('div').addClass("error");
+				$(obj).closest('div').next().removeClass("hidden");
+				$(obj).focus();
+				noInputCount++;
+			} else {
+				if(obj == phoneNo) { // 휴대폰번호
+					if(confAuthNoYn) { authNoClear(); }
+					
+					if($(obj).val().length > 3 && $(obj).val().substring(0,2) != '01') {
+						$(obj).closest('div').addClass("error");
+						$(obj).closest('div').next().removeClass("hidden");
+						$(obj).focus();
+						noInputCount++;
+					} else {
+						$(obj).closest('div').removeClass("error");
+						$(obj).closest('div').next().addClass("hidden");
+					}
+				} else if(obj == birth || obj == ownBirth) { // 생년월일
+					if(!($(obj).val().substring(4,6) >= 1 && $(obj).val().substring(4,6) <= 12 && $(obj).val().substring(6,8) >= 1 && $(obj).val().substring(6,8) <= 32)) {
+						$(obj).closest('div').addClass("error");
+						$(obj).closest('div').next().removeClass("hidden");
+						$(obj).focus();
+						noInputCount++;
+					} else {
+						$(obj).closest('div').removeClass("error");
+						$(obj).closest('div').next().addClass("hidden");
+					}
+				} else {
+					$(obj).closest('div').removeClass("error");
+					$(obj).closest('div').next().addClass("hidden");
+				}
+			}
+			
+			if(obj == expPeriod) {  // 유효기간
+				let expDate = $(obj).val().replace('/', '');
+				let date = new Date();
+				let year = date.getFullYear().toString().substring(2);
+				
+				if($(obj).val().length == 4) { // 형태 변환
+					expDate = expDate.substring(0,2) + "/" + expDate.substring(2,4);
+					$(obj).val(expDate);
+					
+					if(validate.isEmpty($(obj).val()) || !(expDate.substring(0,2) >= year && expDate.substring(3,5) >= 1 && expDate.substring(3,5) <= 12)) {
+						$(obj).closest('div').addClass("error");
+						$(obj).closest('div').next().removeClass("hidden");
+						$(obj).focus();
+						noInputCount++;
+					} else {
+						$(obj).closest('div').removeClass("error");
+						$(obj).closest('div').next().addClass("hidden");
+					}
+				}
+			}
+		}
+		
+		// 전체 입력값 체크
+		$('.'+type).each(function (index, item) {
+			if(validate.isEmpty($(item).val()) || (item != custNm && item != cardOwnNm && $(item).is('[maxlength]') && $(item).val().length != $(item).attr('maxlength'))) {
+				if(item == businessNo && $('#business').hasClass('hidden')) {
+					// 고객유형 개인인 경우 '사업자번호' 체크 안함
+				} else {
+					noInputCount++;
+					if(obj == null) {	// 전체 입력값만 체크하는 경우, obj ==null인 경우
+						$(item).closest('div').addClass("error");
+						$(item).closest('div').next().removeClass("hidden");
+						$(item).focus();
+						return false;
+					}
+				}
+			}
+		});
+		
+		// 체크 결과에 따라 '확인'버튼 활성화
+		if(type == "d-ownInputCk") {
+			if(noInputCount == 0) {
+				$('#nextBtn').attr('disabled', false);
+			} else {
+				$('#nextBtn').attr('disabled', true);
+			}
+		} else if(type == "d-otherInputCk") {
+			if(noInputCount == 0 && $('#agreeChk').is(':checked')) {
+				$('#reqAuthNo').removeAttr('disabled');		// '인증번호 발송' 버튼 활성화
+			} else {
+				$('#reqAuthNo').attr('disabled', true);		// '인증번호 발송' 버튼 비활성화
+			}
+			
+			if(noInputCount == 0 && sendAuthNoYn && confAuthNoYn && $('#agreeChk').is(':checked')) {
+				$('#nextBtn').attr('disabled', false);
+			} else {
+				$('#nextBtn').attr('disabled', true);
+			}
+		}
+	};
+
+	// 실시간출금 정보 입력값 체크
+	const wthdInputCheck = function(obj) {
+		let noInputCount = 0;
+
+		// 현재 입력값 체크
+		if(obj != null) {
+			verifyAcctSuccess = false;
+			$('#verifyBtn').text(txt.verify_acct_req);			// '실명확인 계좌 인증'
+
+			if(validate.isEmpty($(obj).val())) {
+				noInputCount++;
+				$(obj).closest('div').addClass('error');
+                $(obj).closest('div').next().removeClass('hidden');
+                $(obj).focus();
+			} else {
+				if(obj == wthdAcctNum) {  // 계좌번호
+                    if($(obj).val().length < $(obj).attr('minlength')) {
+						noInputCount++;
+                        $(obj).closest('div').addClass("error");
+                        $(obj).closest('div').next().removeClass("hidden");
+                        $(obj).focus();
+                    } else {
+                        $(obj).closest('div').removeClass("error");
+                        $(obj).closest('div').next().addClass("hidden");
+                    }
+				} else {
+					$(obj).closest('div').removeClass("error");
+                    $(obj).closest('div').next().addClass("hidden");
+				}
+			}
+        }
+		
+		if($('#bankList > option:selected').val() == '') {  // 은행명
+			noInputCount++;
+			$('#bankList').closest('div').addClass("error");
+			$('#bankList').closest('div').next().removeClass("hidden");
+		} else {
+			$('#bankList').closest('div').removeClass("error");
+			$('#bankList').closest('div').next().addClass("hidden");
+		}
+
+		// 체크 결과에 따라 '실명확인 계좌인증' 버튼 활성화
+		if(noInputCount == 0 && !verifyAcctSuccess) {
+			$('#verifyBtn').removeAttr('disabled');
+		} else {
+			$('#verifyBtn').attr('disabled', true);
+		}
+
+		// 체크 결과에 따라 '다음' 버튼 활성화
+        if(noInputCount == 0 && verifyAcctSuccess) {
+            $('#nextBtn').removeAttr('disabled');
+        } else {
+            $('#nextBtn').attr('disabled', true);
+        }
+	};
+
+    $(document).ready(function(){
+    	
+    	screenTimer();	// 화면 타임아웃 5분
+    	polling.shortReq(1500, ctrlback);
+    	
+    	// 결제수단 변경이벤트
+    	$('input:radio[name=pay]').change(function(){
+    		const payMethod = $('input:radio[name=pay]:checked').val();
+    		
+    		if(payMethod == "payCard") {					// 신용카드
+    			$('#creditCard').removeClass('hidden');
+				$('#withdraw').addClass('hidden');
+    		} else if(payMethod == "withdraw") {			// 실시간출금
+    			$('#creditCard').addClass('hidden');
+				$('#withdraw').removeClass('hidden');
+    		}
+    	});
+    	
+		// 결제수단 클릭이벤트 (카카오페이, 토스뱅크, 페이코)
+    	$('input:radio[class=d-billPay]').click(function(){
+			$('#creditCard').addClass('hidden');	// 신용카드 hide
+			$('#withdraw').addClass('hidden');		// 실시간출금 hide
+			$('#easyPayPopup').removeClass('hidden');	// 간편결제 안내팝업 표출
+    	});
+
+		// 간편결제 안내 확인 버튼 클릭이벤트
+		$('#easyPayOk').click(function(){
+			const payBank = $('input:radio[class=d-billPay]:checked').val();	// 선택한 간편결제 은행
+			sessionStorage.setItem("payBank", payBank);							// 선택한 간편결제 은행 세션에 저장
+
+			$.ajax({
+				url : contextPath + "/payment/getBillLink",
+				type : "POST",
+				dataType : "text",
+				data : {
+					bank : payBank,
+					payAmt : payAmt
+				},
+				success : function(data) {
+					if(data != "") {
+						if(payBank == "payco") {
+							window.open(data)
+						} else {
+							location.replace(data);
+						}
+						
+						setTimeout(()=>{
+							location.replace(contextPath+"/payment/p0005");
+						}, 1000);
+						
+					} else {
+						location.replace(contextPath+"/common/apiError");
+					}
+				},
+				error : function(jqXHR, textStatus, errorThrown) {
+					location.replace(contextPath+"/common/apiError");
+				}
+			});
+		});
+    	
+    	// 신용카드(본인/타인) 변경이벤트
+    	$('input:radio[name=Card]').change(function(){
+    		if($('input:radio[name=Card]:checked').val() == "ownCard") {
+    			$('.d-cardSelf').removeClass('hidden');
+        		$('.d-cardOther').addClass('hidden');
+        		$('.d-otherInputCk').val("");
+        		$('.d-otherInputCk').closest('div').removeClass("error");
+				$('.d-otherInputCk').closest('div').next().addClass("hidden");
+				$('#business').addClass('hidden');
+				$('input:radio[id=personal]').prop('checked', true);     	// 개인 default
+				$('input:radio[id=local]').prop('checked', true);     		// 내국인 default
+				$('input:radio[id=male]').prop('checked', true);     		// 남자 default
+        		$('#agreeChk').prop('checked', false);			  			// 개인정보수집 약관 비활성화
+        		authNoClear(); 									  			// 인증번호 관련 초기화
+				$('#nextBtn').attr('disabled', true);
+    		} else if($('input:radio[name=Card]:checked').val() == "othersCard") {
+    			$('.d-cardSelf').addClass('hidden');
+        		$('.d-cardOther').removeClass('hidden');
+        		$('.d-ownInputCk').val("");
+        		$('.d-ownInputCk').closest('div').removeClass("error");
+				$('.d-ownInputCk').closest('div').next().addClass("hidden");
+				$('#business').addClass('hidden');
+				$('input:radio[id=personal]').prop('checked', true);     	// 개인 default
+				$('input:radio[id=local]').prop('checked', true);     		// 내국인 default
+				$('input:radio[id=male]').prop('checked', true);     		// 남자 default
+				$('#reqAuthNo').attr('disabled', true);						// 인증번호 발송 버튼 비활성화
+				$('#nextBtn').attr('disabled', true);
+    		}
+    	});
+    	
+    	// 납부요금 5만원 이상 할부 가능
+    	if(payAmt >= 50000) {
+    		$('#instPeriod').removeAttr('disabled');
+    	} else {
+			$('#instPeriod').val('0');
+			$('#instPeriod').attr('disabled', true);
+		}
+    	
+		// 신용카드(본인) 입력값 체크
+    	$('.d-ownInputCk').keyup(function() {
+    		if($('input:radio[name=Card]:checked').val() == "ownCard") {
+    			cardInputCheck(this);
+    		}
+    	});
+    	
+    	// 신용카드(타인) 입력값 체크
+    	$('.d-otherInputCk').keyup(function() {
+    		if($('input:radio[name=Card]:checked').val() == "othersCard") {
+				cardInputCheck(this);
+			}
+    	});
+		
+    	// 카드번호 입력 시 카드사 조회 api
+    	$('#cardNo').keyup(function(){
+    		if($(this).val().replace(/-/g, "").length == 16) {
+    			$.ajax({
+    				url : contextPath + "/payment/getCardComp",
+    				type: "GET",
+    				dataType : "json",
+    				data: { cardPrefix : $(this).val().replace(/-/g, "").substring(0,6) },
+    				success : function(data) {
+    					if(data.retCd == '000') {
+    						$('#cardNo').closest('div').removeClass('error');
+    						$('#cardNo').closest('div').next().addClass('hidden');
+    						$('#cardCompCd').val(data.cccoCd);			// 카드사 코드 셋팅
+    						$('#cardComp').val(data.paymMthdDetlCdNm);	// 카드사 셋팅
+    						
+    						if(data.paymMthdDetlCdNm == "신한카드" && payAmt >= 30000) {     // 신한카드인 경우 3만원 이상 할부 가능
+    				    		$('#instPeriod').removeAttr('disabled');
+    						} else {
+    							// 납부요금 5만원 이상 할부 가능
+    					    	if(payAmt >= 50000) {
+    					    		$('#instPeriod').removeAttr('disabled');
+    					    	} else {
+									$('#instPeriod').val('0');
+    					    		$('#instPeriod').attr('disabled', true);
+									$('#instPeriod').closest('div').next().addClass("hidden");
+    					    	}
+    						}
+    					} else {
+    						$('#cardNo').closest('div').addClass('error');
+    						$('#cardNo').closest('div').next().removeClass('hidden');
+    						$('#cardComp').val(""); // 카드사 초기화
+    					}
+    				},
+    				error : function(jqXHR, textStatus, errorThrown) {
+    					$('#cardNo').closest('div').addClass('error');
+						$('#cardNo').closest('div').next().removeClass('hidden');
+						$('#cardComp').val(""); // 카드사 초기화
+    				}
+    			});
+    		} else if($(this).val().replace(/-/g, "").length == 0) {
+    			$('#cardComp').val(""); // 카드사 초기화
+    		}
+    	});
+    	
+		// 고객유형 변경이벤트 (개인/개인사업자)
+		$('input:radio[name=custType]').change(function(){
+			let birthId = "";
+
+			if($('input:radio[name=Card]:checked').val() == "ownCard") {
+				birthId = myBirth;
+			} else {
+				birthId = otherBirth;
+			}
+
+			if($('input:radio[name=custType]:checked').val() == "20") {	// '개인사업자'인 경우
+				$(birthId).addClass('hidden');
+				$('#business').removeClass('hidden');
+				cardInputCheck(null);
+			} else {
+				$(birthId).removeClass('hidden');
+				$('#business').addClass('hidden');
+				cardInputCheck(null);
+			}
+		});
+
+		// 할부기간 변경이벤트
+		$('#instPeriod').change(function(){
+			let month = $('#instPeriod option:selected').val();
+
+			if(month != 0) {	// 할부개월 선택한 경우
+				$(this).closest('div').next().removeClass("hidden");
+			} else {
+				$(this).closest('div').next().addClass("hidden");
+			}
+		});
+
+    	// 카드타인-인증번호발송 api
+		$('#reqAuthNo').click(function(){
+			if(reqAuthPossible) {
+				authNoClear();	// 인증번호 관련 초기화
+			
+				let otherCarrierYn= "N";
+				if($('#carrier option:selected').val() != 'LG') {
+					otherCarrierYn = "Y";
+				}
+				if(otherCarrierYn == "N") {	// 통신사 LGU+인 경우
+					$.ajax({
+						url : contextPath + "/common/sendAuthNo",
+						type : "POST",
+						dataType : "text",
+						data : {
+							custNm : $('#cardOwnNm').val(),
+							rcpNo : $('#phoneNo').val(),	// 수신번호
+							ocmpSendYn : otherCarrierYn		// 타사발송여부
+						},
+						success : function(data) {
+							console.log(data);
+							if(data !=null && data == "S") {
+								sendAuthNoYn = true;
+								confAuthNoYn = false;
+								reqAuthPossible = false;	// 인증번호 재요청 가능여부
+								reqAuthInfoFail = 0;		// 입력정보 불일치 횟수
+
+								$('#reqAuthNo').text(txt.sms_auth_send_again);		// '재요청하기'
+								$('#authNo').removeAttr('disabled'); 	 		  	// 인증번호 입력칸 활성화
+								$('#extendTime').removeClass('hidden');		  		// 시간연장하기 버튼 표출
+								$('#extendTime').removeAttr('disabled');		  	// 시간연장하기 버튼 활성화
+								$('#confAuthNoArea').removeClass('hidden'); 		// 'SMS 인증번호' 표출
+								$('#authTimer').removeClass('hidden');            	// 인증번호 유효시간 시작
+								clearInterval(inputTimerStart);
+								authInpTimer();
+								authReqTimer();
+
+								$('#infoTxt').html(msg.auth_req_success);
+								$('#infoPopup').removeClass('hidden');
+							} else if(data != null && data == "MISMATCH") {	// 고객정보 불일치
+								reqAuthInfoFail++;
+								if(reqAuthInfoFail == 3) {
+									$('#infoTxt').html(msg.three_times_mismatch);
+									$('#infoOk').addClass('hidden');
+									$('#endInfoOk').removeClass('hidden');	// 콜봇으로 돌아가는 버튼 표출
+									$('#infoPopup').removeClass('hidden');	// 팝업 표출
+									return false;
+								} else {
+									$('#infoTxt').html(msg.input_info_mismatch);
+									$('#infoPopup').removeClass('hidden');
+								}
+							} else {
+								location.replace(contextPath+"/common/apiError");
+								return false;
+							}
+						},
+						error : function(jqXHR, textStatus, errorThrown) {
+							location.replace(contextPath+"/common/apiError");
+							return false;
+						}
+					});
+				} else {	// 타 통신사인 경우 (SKT, KT)
+					// TODO : KMC 인증 확인중
+					$('#infoTxt').html("타통신사 KMC 인증 로직 확인중 입니다.</br>통신사 LGU+로 테스트 해주세요.");
+					$('#infoPopup').removeClass('hidden');
+				}
+				
+			} else {
+				$('#infoTxt').text(msg.auth_req_impossible);
+				$('#infoPopup').removeClass('hidden');
+			}
+			
+    	});
+    	
+    	// 인증번호 관련 초기화
+    	const authNoClear = function() {
+    		sendAuthNoYn = false;
+			confAuthNoYn = false;
+			$('#authNo').val("");								// 인증번호 입력칸 초기화
+			$('#authNo').attr('disabled', true);				// 인증번호 입력칸 비활성화
+    		$('#authNo').closest('div').removeClass('error');
+			$('#authNo').closest('div').nextAll('.time-error').addClass('hidden');
+			$('#confAuthNo').attr('diabled', true);				// 인증하기 버튼 비활성화
+			$('#confAuthNo').text(txt.sms_auth_confirm_req);	// '인증하기'
+			$('#confAuthNoArea').addClass('hidden'); 			// 'SMS 인증번호' 비활성화
+			$('#carrier').removeAttr('disabled');				// 통신사 셀렉트박스 활성화
+			$('#agreeChk').removeAttr('disabled');				// 약관동의 체크박스 활성화
+    		clearInterval(inputTimerStart);						// 인증번호 입력 타이머 초기화
+			clearInterval(reqTimerStart);						// 인증번호 요청 타이머 초기화
+			reqAuthPossible = true;								// 인증요청가능
+    	};
+
+    	// 카드타인-인증번호 입력값 체크
+		$('#authNo').keyup(function() {
+			validate.inputNumCheck(this);
+
+			if(($(this).val().length == $(this).attr('maxlength'))) {
+				$(this).closest('div').removeClass('error');
+				$(this).closest('div').next().addClass('hidden');
+				$('#confAuthNo').removeAttr('disabled');		// '인증하기' 버튼 활성화
+			} else {
+				$(this).closest('div').addClass('error');
+				$(this).closest('div').next().removeClass('hidden');
+				$('#confAuthNo').attr('disabled', true);		// '인증하기' 버튼 비활성화
+			}
+		});
+
+    	// 카드타인-인증번호 시간연장하기 클릭이벤트
+    	$('#extendTime').click(function(){
+   			$('#extendTime').addClass('hidden');  // 버튼 숨김
+   			clearInterval(inputTimerStart);
+   			authInpTimer();
+    	});
+    	
+    	// 카드타인-인증번호 확인
+    	$('#confAuthNo').click(function(){
+    		$.ajax({
+				url : contextPath + "/common/confirmAuthNo",
+				type : "POST",
+				dataType : "text",
+				data : {authNum : $('#authNo').val()},
+				success : function(data) {
+					if(data == "success") {
+						// 인증번호 타이머 제거
+						clearInterval(inputTimerStart);
+
+						$('#carrier').attr('disabled', true);					// 통신사 비활성화
+						$('#phoneNo').attr('disabled', true);					// 휴대폰번호 입력칸 비활성화
+						$('#reqAuthNo').attr('disabled', true);					// 인증번호 발송 버튼 비활성화
+						$('#authNo').attr('disabled', true); 	  				// 인증번호 입력칸 비활성화
+						$('#authTimer').addClass('hidden');		  				// 인증번호 유효시간 숨김
+						$('#extendTime').addClass('hidden'); 	  				// 시간연장하기 버튼 숨김
+						$('#confAuthNo').attr('disabled', true);  				// 인증번호 확인 버튼 비활성화
+						$('#confAuthNo').text(txt.sms_auth_confirm_complete);	// '인증완료'
+						$('#agreeChk').attr('disabled', true);					// 약관동의 체크박스 비활성화
+
+						confAuthNoYn = true;
+						cardInputCheck(null);	// 전체입력체크
+						
+						$('#infoTxt').html(msg.auth_confirm_success);
+						$('#infoPopup').removeClass('hidden');
+					} else {
+						confAuthFail++;
+						if(confAuthFail == 3) {
+							$('#infoTxt').html(msg.three_times_confirm_fail);
+							$('#infoOk').addClass('hidden');
+							$('#endInfoOk').removeClass('hidden');	// 콜봇으로 돌아가는 버튼 표출
+							$('#infoPopup').removeClass('hidden');	// 팝업 표출
+							return false;
+						} else {
+							confAuthNoYn = false;
+							$('#confAuthNo').text(txt.sms_auth_confirm_req);	// '인증하기'
+							$('#infoTxt').html(msg.auth_confirm_fail);
+							$('#infoPopup').removeClass('hidden');
+						}
+						
+					}
+				},
+				error : function(jqXHR, textStatus, errorThrown) {
+					location.replace(contextPath+"/common/apiError");
+					return false;
+				}
+			});
+		});
+    	
+		// 통신사 변경이벤트
+		$('#carrier').change(function(){
+			// 인증 관련 필수값 변경 시 재인증 받아야 함
+			if(confAuthNoYn) {
+				authNoClear();			// 인증번호 관련 초기화
+				$('#phoneNo').val("");	// 휴대폰번호 초기화
+				cardInputCheck(null);
+			}
+		});
+
+		// 성별 변경이벤트
+		$('input:radio[name=gender]').change(function() {
+			// 인증 관련 필수값 변경 시 재인증 받아야 함
+			if(confAuthNoYn) {
+				authNoClear();			// 인증번호 관련 초기화
+				$('#phoneNo').val("");	// 휴대폰번호 초기화
+				cardInputCheck(null);
+			}
+		});
+
+		// 약관동의 변경이벤트
+		$('#agreeChk').change(function(){
+			cardInputCheck(null); // 전체 입력값 체크
+		});
+
+    	// 실시간출금 - 입력값 체크
+    	$('.d-wthdInfoCk').keyup(function() {
+    		wthdInputCheck(this);
+    	});
+
+    	// 실시간출금 - 고객유형 변경이벤트 (개인/개인사업자)
+		$('input:radio[name=wthdCustType]').change(function(){
+			if($('input:radio[name=wthdCustType]:checked').val() == "20") {	// '개인사업자'인 경우
+				$('#wthdBusi').removeClass('hidden');
+				wthdInputCheck(null);
+			} else {
+				$(birthId).removeClass('hidden');
+				$('#wthdBusi').addClass('hidden');
+				wthdInputCheck(null);
+			}
+		});
+    	
+		// 실시간출금 - 은행리스트 변경이벤트
+		$('#bankList').change(function(){
+			verifyAcctSuccess = false;
+			wthdInputCheck(this);
+		});
+
+
+		// 실명확인 계좌인증 버튼 클릭이벤트
+    	$('#verifyBtn').click(function(){
+    		let custDetlKdCd = "";
+        	let busiNum = null;
+
+        	if($('input:radio[name=wthdCustType]:checked').val() == 20) {   // 개인사업자인 경우
+                custDetlKdCd = "21";
+                busiNum = $('#wthdBusiNum').val();
+            } else {
+                //custDetlKdCd = $('input:radio[name=accountHolder]:checked').val();
+            }
+        	
+        	$.ajax({
+        		url: contextPath + "/common/verifyPayMthd",
+        		type : "POST",
+                dataType : "json",
+                data : {
+                	custBasKdCd : $('input:radio[name=wthdCustType]:checked').val(),    // 고객기본유형코드 (개인/개인사업자)
+                    custDetlKdCd :custDetlKdCd,                                         // 고객상세유형코드 (내국인/외국인/개인사업자)
+                	paymMthdCd : "CM",                                                  // 납부방법코드
+                    brno : busiNum,                                                     // 사업자번호
+                    acntOwnrNm : $('#wthdAcctOwner').val(),                             // 소유자명
+                	bankAcntNo : $('#wthdAcctNum').val(),                               // 은행계좌번호
+                	bankCd : $('#bankList option:selected').attr('data-bankCd'),        // 은행코드
+                },
+                success : function(data) {
+                	if(data.dma_authRslt != undefined && data.dma_authRslt.msgCode == "Y") {
+                        verifyAcctSuccess = true;
+                        $('#verifyBtn').attr('disabled', true);
+                        $('#verifyBtn').text(txt.verify_acct_complete);	// '실명 확인 완료'
+                        wthdInputCheck(null);
+						$('#infoTxt').html(msg.verify_acct_success);
+                        $('#infoPopup').removeClass('hidden');
+                    } else {
+                        verifyAcctSuccess = false;
+                        $('#verifyBtn').text(txt.verify_acct_req);			// '실명확인 계좌 인증'
+                        $('#infoTxt').html(msg.verify_acct_fail);
+                        $('#infoPopup').removeClass('hidden');
+                        verifyAcctFail++;
+                        if(verifyAcctFail == 3) {
+                            location.replace(contextPath+"/common/apiError");
+                        }
+                    }
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                	verifyAcctSuccess = false;
+                    $('#verifyBtn').text(txt.verify_acct_req);			// '실명확인 계좌 인증'
+                    $('#infoTxt').text(msg.verify_acct_fail);
+                    $('#infoPopup').removeClass('hidden');
+                    verifyAcctFail++;
+                    if(verifyAcctFail == 3) {
+                        location.replace(contextPath+"/common/apiError");
+                    }
+                }
+        	});
+    	});
+    	
+    	// 다음 클릭이벤트 (SMS 본인인증)
+    	$('#nextBtn').click(function(){
+    		$.ajax({
+    			url : contextPath + "/common/getAuthPopup",
+				type : "POST",
+				dataType : "json",
+				success : function(data) {
+					$('#myName').val(data.custNm);
+					$('#myPhoneNum').val(data.telNo);
+					$('#smsAuthPopup').removeClass('hidden');
+				},
+				error : function(jqXHR, textStatus, errorThrown) {
+					location.replace(contextPath+"/common/apiError");
+				}
+    		})
+    	});
+    	
+    	// 본인인증 완료 후 확인 버튼 클릭이벤트 (납부진행)
+    	$('#smsAuthOk').click(function(){
+    		const payMethod = $('input:radio[name=pay]:checked').val();
+    		
+    		if(payMethod == "payCard") {
+    			payForCard();
+    		} else if(payMethod == "withdraw") {
+    			payForWthd();
+    		}
+    		
+    	});
+
+    	// 개인정보수집 이용안내
+        $('#perInfoGuide').click(function(){
+            $('#perInfoGuidePopup').removeClass('hidden');
+        });
+    });
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">요금 바로 납부</h1>
+        <button class="c-btn" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="content-section">
+            <h2 class="section-tit"><span>결제 정보 입력</span></h2>
+        	<!-- 결제 수단 선택 -->
+            <div class="inputInfo">
+                <label for="choicePayment" class="info-label">
+                    결제 수단 선택
+                    <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                </label>
+                <div class="radio-group">
+                    <div class="radio-box">
+                        <span class="radio-btn">
+                            <input name="pay" type="radio" value="payCard" checked>
+                            <label for="payCard" class="text-radio"><span class="txt">신용카드</span></label>
+                        </span>
+                    </div>
+                    <div class="radio-box">
+                        <span class="radio-btn">
+                            <input name="pay" type="radio" value="payco" class="d-billPay">
+                            <label for="payco" class="text-radio"><span class="txt">PAYCO포인트</span></label>
+                        </span>
+                    </div>
+                    <div class="radio-box">
+                        <span class="radio-btn">
+                            <input name="pay" type="radio" value="toss" class="d-billPay">
+                            <label for="toss" class="text-radio"><span class="txt">토스</span></label>
+                        </span>
+                    </div>
+                    <div class="radio-box">
+                        <span class="radio-btn">
+                            <input name="pay" type="radio" value="kakao" class="d-billPay">
+                            <label for="kakaopay" class="text-radio"><span class="txt">카카오페이</span></label>
+                        </span>
+                    </div>
+                    <div class="radio-box">
+                        <span class="radio-btn">
+                            <input name="pay" type="radio" value="withdraw">
+                            <label for="withdraw" class="text-radio"><span class="txt">실시간 출금</span></label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!-- 결제 수단 선택 END -->
+           
+            <!-- 신용카드 선택 콘텐츠 영역 -->
+            <div class="creditCard mt26" id="creditCard">
+                <!-- 카드 소유자 선택 -->
+                <div class="inputInfo" id="cardOwner">
+                    <div class="radio-group vertical">
+                        <div class="radio-box">
+                            <span class="radio-btn">
+                                <input name="Card" type="radio" value="ownCard" checked>
+                                <label for="ownCard" class="text-radio">
+                                    <span class="txt">신용카드 (본인)</span>
+                                    <span class="s-txt">카드 명의자, 현재 납부자, 홈페이지 회윈의 카드로만 납부할 수 있습니다.</span>
+                                </label>
+                            </span>
+                        </div>
+                        <div class="radio-box">
+                            <span class="radio-btn">
+                                <input name="Card" type="radio" value="othersCard">
+                                <label for="othersCard" class="text-radio">
+                                    <span class="txt">신용카드 (타인)</span>
+                                    <span class="s-txt">다른 사람의 카드를 이용할 경우, 카드의 정확한 정보 확인을 위해 추가 인증이 진행됩니다.</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- 고객 유형 / 공통 -->
+                <div class="inputInfo">
+                    <label for="customer" class="info-label">
+                        고객 유형
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="r-radio-group">
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="personal" name="custType" type="radio" value="10" checked>
+                                <label for="personal" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">개인</span>
+                                </label>
+                            </span>
+                        </div>
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="p-business" name="custType" type="radio" value="20">
+                                <label for="p-business" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">사업자(개인사업자)</span>
+                                </label>
+                           </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 카드번호 / 공통 -->
+                <div class="inputInfo">
+                    <label for="cardNo" class="info-label">
+                        카드번호
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="cardNo" name="" placeholder='"-"없이 숫자만 입력' maxlength="19" type="tel" class="custom-inp d-ownInputCk d-otherInputCk" onkeyup="validate.inputCardNoCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">카드번호를 정확하게 입력해 주세요.</p>
+                </div>
+             
+                <!-- 카드사 / 공통 -->
+                <div class="inputInfo">
+                    <label for="cardComp" class="info-label">
+                        카드사
+                        <button class="q-btn tooltip d-tooltip">
+                            <span class="hidden">카드사 설명보기</span>
+                            <p class="tooltip-txt">
+                                은행계열 카드 <span class="t-special">하나SK카드, 하나카드 중 일부</span>는<br>
+                                카드사명이 BC카드로 표기됩니다.
+                            </p>
+                        </button>
+                    </label>
+                    <div class="custom-info">
+                        <input id="cardCompCd" class="hidden">
+                        <input id="cardComp" name="" placeholder="카드번호 입력 시 자동으로 표시됩니다." type="text" class="custom-inp d-ownInputCk d-otherInputCk" disabled>
+                    </div>
+               </div>
+             
+                <!-- 카드 유효기간 / 공통 -->
+                <div class="inputInfo">
+	                <label for="expPeriod" class="info-label">
+	                    카드 유효기간
+	                    <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+	                </label>
+	                <div class="custom-info">
+	                    <input id="expPeriod" name="" placeholder="OO년/OO월" maxlength="5" type="tel" class="custom-inp d-ownInputCk d-otherInputCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+	                </div>
+	                <p class="error-txt hidden">카드 유효기간을 확인해 주세요.</p>
+                </div>
+              
+                <!-- 할부기간 / 공통 -->
+                <div class="inputInfo">
+					<label for="installment" class="info-label">
+						할부기간
+						<button class="q-btn tooltip d-tooltip">
+							<span class="hidden">할부기간 설명보기</span>
+							<p class="tooltip-txt">
+								결제 금액 5만원 이상 할부 가능합니다.<br>
+								(신한카드의 경우에만 3만원이상 할부 가능)
+							</p>
+						</button>
+						<!--<span class="required"><i class="hidden">필수항목</i></span>-->
+					</label>
+					<div class="select-box">
+						<select id="instPeriod" class="select-form">
+							<option id="" value="0" selected>일시불</option>
+							<option th:each="month : ${#numbers.sequence(2, 12)}" th:value="${month}" th:text="|${month}개월|"></option>
+						</select>
+					</div>
+					<p class="error-txt hidden">무이자 할부와 제휴카드 할인은 이용중인 카드회사로 문의해 주세요.</p>
+                </div>
+             
+                <!-- 고객명 / 카드본인 -->
+                <div class="inputInfo d-cardSelf">
+                    <label for="custNm" class="info-label">
+                        고객명
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="custNm" name="customerName" placeholder="고객명" type="text" maxlength="20" class="custom-inp d-ownInputCk" onkeyup="validate.inputTextCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">고객명을 입력해 주세요.</p>
+                </div>
+             
+                <!-- 생년월일 / 카드본인 -->
+                <div class="inputInfo d-cardSelf" id="myBirth">
+                    <label for="birth" class="info-label">
+                        생년월일
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="birth" name="birth" placeholder="생년월일 8자리" maxlength="8" type="tel" class="custom-inp d-ownInputCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">생년월일을 입력해 주세요.</p>
+                </div>
+              
+                <!-- 카드명의자 고객명 / 카드타인 -->
+                <div class="inputInfo d-cardOther hidden">
+                    <label for="cardOwnNm" class="info-label">
+                        카드 명의자 고객명
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="cardOwnNm" name="cardholderName" placeholder="카드 명의자 고객명" maxlength="20" type="text" class="custom-inp d-otherInputCk" onkeyup="validate.inputTextCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">카드 명의자를 입력해 주세요.</p>
+                </div>
+             
+                <!-- 카드명의자 생년월일 / 카드타인 -->
+                <div class="inputInfo d-cardOther hidden" id="otherBirth">
+                    <label for="ownBirth" class="info-label">
+                        카드 명의자 생년월일
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="ownBirth" name="cardholderBirth" placeholder="카드 명의자 생년월일 8자리" maxlength="8" type="tel" class="custom-inp d-otherInputCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">생년월일을 입력해 주세요.</p>
+                </div>
+            
+			    <!-- 사업자등록번호 / 공통 -->
+                <div class="inputInfo hidden" id="business">
+                    <label for="businessNo" class="info-label">
+                        사업자등록번호
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="businessNo" placeholder='"-"없이 10자리 숫자만 입력' maxlength="10" type="tel" class="custom-inp d-ownInputCk d-otherInputCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">사업자등록번호를 입력해 주세요.</p>
+                </div>
+
+                <!-- 카드명의자구분 / 공통 -->
+                <div class="inputInfo">
+                    <label for="cardholder" class="info-label">
+                        카드 명의자 구분
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="r-radio-group">
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="local" name="cardholder" type="radio" value="11" checked>
+                                <label for="local" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">내국인</span>
+                                </label>
+                            </span>
+                        </div>
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="foreigner" name="cardholder" type="radio" value="12">
+                                <label for="foreigner" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">외국인</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="error-txt hidden">카드 명의자를 선택해 주세요.</p>
+                </div>
+          
+                <!-- 성별 / 공통 -->
+                <div class="inputInfo">
+                    <label for="gender" class="info-label">
+                        성별
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="r-radio-group">
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="male" name="gender" type="radio" value="male" checked>
+                                <label for="male" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">남</span>
+                                </label>
+                            </span>
+                        </div>
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="female" name="gender" type="radio" value="female">
+                                <label for="female" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">여</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="error-txt hidden">성별을 선택해 주세요.</p>
+                </div>
+              
+                <!-- 카드 타인 인증 -->
+                <div class="inputInfo d-cardOther hidden">
+                    <label for="phoneNum" class="info-label">
+                        휴대폰번호
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="select-box">
+                        <select id="carrier" class="select-form">
+                            <option value="LG">LG U+ / LG U+(알뜰폰)</option>
+                            <option value="SKT">SKT</option>
+                            <option value="KT">KT</option>
+                            <option value="SKT">SKT(알뜰폰)</option>
+                            <option value="KT">KT(알뜰폰)</option>
+                        </select>
+                    </div>
+                    <div class="custom-info inBtn">
+                        <input id="phoneNo" name="phoneNum" placeholder='"-"없이 숫자만 입력' minlength="10" maxlength="11" type="tel" class="custom-inp d-otherInputCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+                        <div class="btn-group exTime">
+                        	<button title="인증번호 발송" class="request-btn" id="reqAuthNo" disabled><span class="">인증번호 발송</span></button>
+                    	</div>
+                    </div>
+                    <p class="error-txt hidden">유효한 휴대폰 번호를 입력해 주세요.</p>
+                </div>
+              
+                <!-- 카드 타인 인증 -->
+                <div class="inputInfo hidden" id="confAuthNoArea">
+                    <label for="certNum" class="info-label">
+                        SMS 인증번호
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info inBtn">
+                        <input id="authNo" name="certNum" placeholder="인증번호 6자리 입력" maxlength="6" type="tel" class="custom-inp" autocomplete="off" disabled>
+                        <div class="btn-group exTime">
+                            <p class="time-txt hidden" id="authTimer"><span class="t-special" id="remainTime">03:00</span></p>
+                            <button title="인증하기" class="request-btn standard" id="confAuthNo" disabled><span class="">인증하기</span></button>
+                            <button title="시간연장하기" class="request-btn" id="extendTime"><span class="">시간연장하기</span></button>
+                        </div>
+                    </div>
+                    <p class="error-txt hidden">인증번호를 입력해 주세요.</p>
+                    <p class="error-txt time-error hidden">인증번호가 만료되었습니다. 다시 요청해주시기 바랍니다.</p>
+                </div>
+              
+                <!-- 카드 타인 인증 -->
+                <div class="inputInfo d-cardOther hidden">
+                    <div class="check-box">
+                        <input type="checkbox" name="certification" id="agreeChk">
+                        <label for="certification" class="t-checkbox">
+                            <i class="icon"></i>
+                            <span class="text">휴대폰 인증시 수집된 개인정보(성명, 생년월일, 성별, 휴대폰번호)는 개인정보 수집 이용정책과 같이 활용됨을 동의함</span>
+                        </label>
+                        <div class="content-row">
+                            <div class="info-btn agree-open" id="perInfoGuide"><a href="#" class="btn-arrow">개인정보 수집 이용 안내</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 신용카드 선택 콘텐츠 영역 -->
+             
+            <!-- 실시간출금 선택 콘텐츠 영역 -->
+            <div class="withdraw hidden" id="withdraw">
+                <!-- 고객유형 -->
+                <div class="inputInfo">
+                    <label for="customer" class="info-label">
+                        고객 유형
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="r-radio-group">
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="personal" name="wthdCustType" type="radio" value="10" checked>
+                                <label for="personal" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">개인</span>
+                                </label>
+                            </span>
+                        </div>
+                        <div class="r-radio-box">
+                            <span class="r-radio">
+                                <input id="p-business" name="wthdCustType" type="radio" value="20">
+                                <label for="p-business" class="radio-txt">
+                                    <i class="icon"></i>
+                                    <span class="customer-type">사업자(개인사업자)</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- 예금주명 -->
+                <div class="inputInfo">
+                    <label for="bankOwner" class="info-label">
+                        예금주명
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="custom-info">
+                        <input id="wthdAcctOwner" name="bankOwner" placeholder="예금주명을 입력하세요" maxlength="20" type="text" class="custom-inp d-wthdInfoCk" onkeyup="validate.inputTextCheck(this)" autocomplete="off">
+                    </div>
+                    <p class="error-txt hidden">예금주명을 입력해 주세요.</p>
+                </div>
+                
+                <!-- 은행명 -->
+                <div class="inputInfo">
+                    <label for="bank" class="info-label">
+                        은행명
+                        <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                    </label>
+                    <div class="select-box">
+                        <select id="bankList" class="select-form d-bankInfoCk">
+                            <option value="">은행명 선택</option>
+                            <th:block th:each="bank : ${bankList}">
+                            <option th:unless="${bank.paymBankCd} == 012" th:value="${bank.paymMthdNm}" th:text="${bank.paymMthdNm}" th:data-bankCd="${bank.paymBankCd}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                    <p class="error-txt hidden">은행명을 선택해 주세요.</p>
+                 </div>
+
+                 <!-- 계좌번호 -->
+                 <div class="inputInfo">
+                     <label for="accountNum" class="info-label">
+                         계좌번호
+                     </label>
+                     <div class="custom-info">
+                         <input id="wthdAcctNum" name="accountNum" placeholder='"-"없이 숫자만 입력' type="tel" class="custom-inp d-wthdInfoCk" minlength="10" maxlength="16" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+                     </div>
+                     <p class="error-txt hidden">계좌번호를 입력해 주세요.</p>
+                 </div>
+                 
+                 <!-- 사업자등록번호 -->
+	             <div class="inputInfo hidden" id="wthdBusi">
+	                 <label for="businessNo" class="info-label">
+	                     사업자등록번호
+	                     <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+	                 </label>
+	                 <div class="custom-info">
+	                     <input id="wthdBusiNum" placeholder='"-"없이 10자리 숫자만 입력' maxlength="10" type="tel" class="custom-inp d-wthdInfoCk" onkeyup="validate.inputNumCheck(this)" autocomplete="off">
+	                 </div>
+	                 <p class="error-txt hidden">사업자등록번호를 입력해 주세요.</p>
+	             </div>
+                
+                 <div class="btn-group">
+                     <button class="g-line verifBtn" id="verifyBtn" disabled>실명확인 계좌 인증</button>
+                     <!-- 실명인증 되면 실명 확인 완료 텍스트 변경 -->
+                 </div>
+             </div>
+             <!-- 실시간출금 선택 콘텐츠 영역 END -->
+        </div>
+        
+        <div class="btn-group">
+            <button class="g-line" id="backBtn">이전</button>
+            <button class="standard" id="nextBtn" disabled>다음</button>
+        </div>
+        
+        <div class="accordion-group">
+	        <div class="accordion-box notice d-accoBox">
+	            <div class="accordion-header d-accoBtn">
+	                <div class="text">
+	                    <p>요금 납부 시 중복 결제 주의안내</p>
+	                </div>
+	                <button title="고객정보 수집 및 이용동의 약관내용보기" type="button" class="accordion-btn">
+	                    <i class="toggleIcon"></i>
+	                </button>
+	            </div>
+	            <div class="accordion-body">
+	                <ul class="list dot-list">
+	                    <li>은행이나 카드 <span class="t-special">자동이체 결제 기간 중 신용카드/입금 전용계좌 납부를 하시면 두 번 결제될 수 있으니,</span> 납부 전에 거래내역을 꼭 확인해 주시기 바랍니다</li>
+	                    <li>중복 결제가 발생할 경우, 납부 방법 및 금액에 따라 자동으로 환불되거나 다음 달 요금에서 미리 결제됩니다</li>
+	                    <li>요금이 두 번 납부가 될 경우 아래와 같이 환불처리 됩니다.</li>
+	                    <li class="subdot-list">- 카드자동이체 – 카드즉납 → 카드자동이체 납부취소(단, 동일금액 두 번 납부 시)</li>
+	                    <li class="subdot-list">- 카드자동이체 – 카드즉납 납부취소</li>
+	                    <li>법인명의의 사업자카드는 결제가 불가능합니다.</li>
+	                </ul>
+	            </div>
+	        </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+
+<!--모달 팝업 영역-->
+<div class="modal_wrap">
+	<!--간편결제 안내 팝업-->
+	<div class="popup popup-1 hidden d-popup" id="easyPayPopup">
+		<div class="pop-wrap">
+			<div class="pop-content">
+				<div class="pop-header">
+					<h1 class="pop-tit">확인</h1>
+				</div>
+				<div class="pop-body">
+					<p class="pop-txt">간편결제를 위한 화면으로 이동합니다.</br>간편결제 앱에서 결제를 완료해야 정상적으로 납부됩니다.</p>
+				</div>
+				<div class="pop-footer">
+					<div class="btn-group">
+						<button class="standard" id="easyPayOk">확인</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--간편결제 안내 팝업 END-->
+</div>   
+<!--모달 팝업 영역 END-->
+</th:block>
+</html>

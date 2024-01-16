@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/single}">
+
+<head>
+	<link th:href="@{/static/css/common/bootstrap.min.css}" rel="stylesheet" type="text/css"/>
+ 	<script th:inline="javascript">
+ 	$(document).ready(function(){
+ 		localStorage.clear();
+ 		sessionStorage.clear();
+ 		
+ 		$('#autosid').on("click", function(){
+ 			if($(this).prop("checked")){
+ 				$('#sid').prop("readonly", true);
+ 				$('#sid').val("");
+ 			}else{
+ 				$('#sid').prop("readonly", false);
+ 			}	
+ 		});
+ 		
+ 		const userData = "{\"customerName\":\"홍길동\",\"memberType\":\"0\",\"menuDiv\":\"100\",\"cmenuDiv\":\"100\",\"timeStatus\":\"1\",\"ctiConnId\":\"test_cti_id\",\"custId\":\"test_cust_id\"}";
+ 		
+ 		$('#userData').val(userData);
+ 		
+ 		
+ 		const token = Date.now().toString(36) + Math.random().toString(36).substring(2);
+ 		$('#btoken').val(token);
+ 	
+ 		sessionStorage.setItem("btoken", token);
+
+ 	});
+ 	
+
+ 	const authenticate = function(){
+ 		let c = true;
+ 		$("input[type=text]").each(function(){
+ 			
+ 			 if($(this).prop("id") != 'userData' && $.trim($(this).val()) === '' && ($(this).prop("id") != 'sid' && !$("#autosid").prop("checked"))){
+ 				$(this).focus();
+ 				c = false;
+ 			 }
+ 		});
+ 		if(c){
+ 			$("form").submit();
+ 		}
+ 	};
+ 	
+ 	
+ 	
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+   	<body>
+   		<div class="bg-white border rounded-5">
+   		<section class="w-100 p-4 d-flex justify-content-left pb-4">
+		<form th:action="@{/auth/checkLogin}" th:method="POST">
+			<input th:type="hidden" th:name="btoken" th:id="btoken"/>
+			<legend>DEOTIS DigitalArs Local Test Page</legend>
+			<div class="form-outline mb-4">
+				<label for="sid" class="form-label">SID</label>
+				<input type="text" class="form-control" th:name="sid" th:id="sid" placeholder="auto generate..." aria-describedby="sidHelp" readonly>
+				<input type="checkbox" class="form-check-input" th:id="autosid" th:name="autosid" checked>
+				<input type="hidden" name="_autosid" value="on">
+    			<label class="form-check-label" for="autosid">Auto generate</label>
+				<div id="sidHelp" class="form-text">test sid</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="siteCode" class="form-label">Site Code</label>
+				<input type="text" class="form-control" th:name="siteCode" th:id="siteCode" th:value="101" placeholder="SiteCode" aria-describedby="site_codeHelp" th:readonly="${not #strings.isEmpty(DEFAULT_SITE_CODE)} ? 'readonly'">
+				<div id="site_codeHelp" class="form-text">test site_code</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="dnis" class="form-label">Dnis</label>
+				<input type="text" class="form-control" th:name="dnis" th:id="dnis" th:value="6311000" placeholder="DNIS Number" aria-describedby="dnisHelp">
+				<div id="dnisHelp" class="form-text">test dnis number</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="ani" class="form-label">AniNo</label>
+				<input type="text" class="form-control" th:name="ani" th:id="ani" th:value="010-1234-5678" placeholder="Ani Number" aria-describedby="aninoHelp">
+				<div id="aninoHelp" class="form-text">test ani number(user ctn)</div>
+			</div>
+			<!--  
+			<div class="form-outline mb-4">
+				<label for="WMSAccessDeviceCode" class="form-label">WMSAccessDeviceCode</label>
+				<input type="text" class="form-control" th:name="wmsAccessDeviceCode" th:id="wmsAccessDeviceCode" th:value="1" placeholder="wmsAccessDeviceCode" aria-describedby="deviceHelp">
+				<div id="deviceHelp" class="form-text">test WMSAccessDeviceCode</div>
+			</div>
+			-->
+			<div class="form-outline mb-4">
+				<label for="userData" class="form-label">UserData</label>
+				<textarea class="form-control" th:name="userData" th:id="userData" rows="3" cols="100" aria-describedby="usrdataHelp"></textarea>
+				<div id="usrdataHelp" class="form-text">UserData(From IVR UserData)</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="menuCode" class="form-label">MenuCode</label>
+				<input type="text" class="form-control" th:name="menuCode" th:id="menuCode" value="1" placeholder="Menu Code" aria-describedby="menucodeHelp">
+				<div id="menucodeHelp" class="form-text">MainMenu Code</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="wcSeq" class="form-label">WcSeq</label>
+				<input type="text" class="form-control" th:name="wcSeq" th:id="wcSeq" value="1" placeholder="WcSeq" aria-describedby="wcseqHelp">
+				<div id="wcseqHelp" class="form-text">WcSeq</div>
+			</div>
+			<div class="form-outline mb-4">
+				<label for="appBindDetails" class="form-label">appBindDetails</label>
+				<textarea class="form-control" rows="2" cols="100" th:name="appBindDetails" th:id="appBindDetails">{"libVersion":"4.0.0","launcherType":"2","packageName":"com.deotis.app"}</textarea>
+			</div>
+			<button type="button" class="btn btn-primary btn-block mb-4" onclick="authenticate();">Authenticate</button>
+		</form>
+		</section>
+		</div>
+	</body>
+</th:block>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- Head -->
+<th:block th:fragment="headFragment">
+    <head>
+    	<title>U+ 눈으로 보는 콜봇 Wisepotal</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		
+		<!-- Disable automatic phone number detection. -->
+		<meta name="format-detection" content="telephone=no, address=no, email=no" />
+		<meta name="theme-color" content="#ffffff">
+		<meta name="_csrf" th:content="${_csrf?.token}"/>
+		<meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+		<link id="contextPathHolder" th:data-contextPath="${#httpServletRequest.getContextPath()}"/>
+		
+		<!-- CSS 추가 -->
+		<link rel="stylesheet" th:href="@{/static/css/common.css?version=20230130}">
+		<link rel="stylesheet" th:href="@{/static/css/style.css?version=20230130}">
+	</head>
+</th:block>
+</html>

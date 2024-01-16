@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.deotis.digitalars.mapper.business.MainMapper">
+
+	<select id="getSiteInfo" parameterType="com.deotis.digitalars.util.collection.DMap" resultType="com.deotis.digitalars.model.SiteInfo">
+			SELECT site_code 
+				,site_name
+				,theme_data
+				,(SELECT blob_data FROM M_BLOB WHERE mb_seq = site.mb_seq) as blob_data
+			 FROM M_SITE site
+			 WHERE site_gcode = #{params.site_gcode}
+			 AND site_code = #{params.site_code}
+	</select>
+
+</mapper>

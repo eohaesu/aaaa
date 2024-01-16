@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/single}">
+
+<head>
+  <link th:href="@{/static/css/common/bootstrap.min.css}" rel="stylesheet" type="text/css" />
+  <style>
+    div {
+      padding: 10px;
+    }
+  </style>
+  <script th:inline="javascript">
+  </script>
+</head>
+
+<th:block layout:fragment="content">
+
+  <body>
+    <div style="display: flex;align-items: center;justify-content: space-between;flex-direction: column;">
+      <span>templateIndex</span>
+      <div>
+        <a th:href="@{/test/template1?type=1}">template1 type1</a>
+      </div>
+      <div>
+        <a th:href="@{/test/template2?type=1}">template2 type1</a>
+      </div>
+      <div>
+        <a th:href="@{/test/template3?type=1}">template3 type1</a>
+      </div>
+    </div>
+  </body>
+</th:block>
+
+</html>

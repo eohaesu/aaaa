@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">홈 서비스 일시정지 신청</h1>
+        <button class="c-btn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="content-section">
+            <h2 class="section-tit center"><span>일시정지 설정</span></h2>
+            <!-- 일시정지 사유 -->
+            <div class="inputInfo">
+               <label class="info-label">
+                   일시정지 사유
+                   <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+               </label>
+               <div class="select-box">
+                   <select class="select-form">
+                       <option value="1">사유선택</option>
+                       <option value="1">장비도난(모뎀/PC/AP)</option>
+                       <option value="1">장애발생/품질불만</option>
+                       <option value="1">부모요청</option>
+                       <option value="1">인터넷 미사용</option>
+                       <option value="1">PC고장/PC없음</option>
+                       <option value="1">장기일시정지 (군입대, 해외체류, 형집행 등)</option>
+                   </select>
+                   <p class="error-txt hidden">일시정시 사유를 선택해 주세요.</p>
+               </div>
+            </div>
+
+            <!-- 시작일/종료일 지정 -->
+            <div class="inputInfo">
+                <label class="info-label">
+                    시작일/종료일 지정
+                    <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                </label>
+                <ul class="input-flex">
+                    <li>
+                        <div class="custom-info calendar">
+                            <input type="text" class="custom-inp datepicker" id="datepicker" readonly>
+                            <i class="calendar-icon"></i>
+                        </div>
+                    </li>
+                    <li class="unit">-</li>
+                    <li>
+                        <div class="custom-info calendar">
+                            <input type="text" class="custom-inp datepicker" id="datepicker2" readonly>
+                            <i class="calendar-icon"></i>
+                        </div>
+                    </li>
+                </ul>
+                <p class="error-txt hidden">일시정지 시작일을 지정해 주세요.</p>
+                <p class="error-txt hidden">일시정지 종료일을 지정해 주세요.</p>
+            </div>
+            <!-- 시작일/종료일 지정 END -->
+
+            <!-- 홈 서비스 안내메시지 -->
+            <div class="content-row">
+                <ul class="list dot-list">
+                    <li class="t-special">인터넷 서비스 일시정지 후에는 U+tv를 통해 VOD(영상콘텐츠)를 보거나 넷플릭스, 유튜브, U+아이들나라, 디즈니+를 이용할 수 없습니다.</li>
+                </ul>
+            </div>
+            <!--홈 서비스 안내메시지 END -->
+        </div>
+
+        <div class="btn-group">
+            <button class="g-line">이전</button>
+            <button class="standard">신청</button>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+
+<!--모달 팝업 영역-->
+<div class="modal-wrap">
+    <!-- 홈 일시정지 신청 및 변경 안내사항 -->
+    <div class="popup popup-2 pshome hidden">
+        <div class="pop-wrap">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">홈 일시정지 신청 및 변경 안내사항</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                   <div class="content-section">
+                       <div class="card bg-gray">
+                           <ul class="list notice pl26">
+                               <li class="text">
+                                   꼭 확인하세요
+                               </li>
+                           </ul>
+                       </div>
+                   </div>
+                   <div class="content-section">
+                        <ul class="list dot-list">
+                            <li class="list-tit">홈 일시정지 신청 및 변경</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv의 일시정지는 총 3회까지 신청할 수 있으며 이용기간은 최대 90일까지 입니다.</li>
+                            <li>U+인터넷 일시정지 시 와이파이, 홈IoT 등은 함께 이용할 수 없습니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv는 미납금이 있으면 일시정지를 신청 할 수 없습니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv의 경우, 일시정지 기간에도 장비 임대료가 발생합니다. 약정기간은 일시정지 기간만큼 연장됩니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv 일시정지 시 고객님의 안전한 정보보호를 위해 본인 인증 절차가 진행됩니다.</li>
+                            <li>U+스마트홈 서비스는 홈페이지에서 일시정지 신청이 불가하므로 고객센터로 문의해 주세요.</li>
+                            <li>일시정지 신청 시 개인고객, 개인사업자고객, 법인사업자고객 등에 따라 필요한 서류가 다르므로 반드시 고객센터에 문의하시길 바랍니다.</li>
+                            <li>U+인터넷 일시정지 기간동안 유무선 결합할인, 유선 상품간 결합할인은 적용되지 않습니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv 예약정지/예약해소시 예약일의 22시부터 자동처리 됩니다.</li>
+                            <li>U+인터넷 일시정지 기간 동안 U+tv는 실시간 채널 외 다른 서비스는 이용이 제한됩니다.(VOD, 넷플릭스, 유튜브, 아이들나라 등등)</li>
+                            <li>넷플릭스 청구대행 또는 프리미엄 넷플릭스 HD/UHD요금제 이용 고객의 경우 U+인터넷, U+인터넷전화, U+tv 일시정지시에도 넷플릭스 요금은 정상 청구됩니다. 결제를 원하지 않을 경우 넷플릭스 홈페이지 내 멤버십 해지 진행하셔야합니다.</li>
+                       </ul>
+                   </div>
+                   <div class="content-section">
+                       <ul class="list dot-list">
+                            <li class="list-tit">홈 일시정지 해제</li>
+                            <li>일시정지가 해제되는 다음달에는 가입한 상품의 월 정액이 정상 청구됩니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv의 일시정지 해제를 한 뒤에도 서비스를 정상적으로 이용 할 수 없는 경우, 컴퓨터나 공유기, 와이파이 공유기를 껐다가 다시 켜면 됩니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv 일시정지 해제가 되면 요금이 정상 청구됩니다.</li>
+                            <li>U+인터넷, U+인터넷전화, U+tv 일시정지 해제 이후 365일이 경과해야 90일 일시정지를 다시 신청할 수 있습니다.</li>
+                       </ul>
+                   </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="standard">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 홈 일시정지 신청 및 변경 안내사항 END-->
+</div>   
+<!--모달 팝업 영역 END-->
+
+<!-- 캘린더 모달용 레이어-->
+<div class="blacklayer hidden"></div> <!-- 캘린더 클릭 시 hidden 제거 -->
+
+<script>
+	$(document).ready(function(){
+		$( function() {
+            $( "#datepicker" ).datepicker({
+                dateFormat: "yy-mm-dd",
+                showMonthAfterYear: true,
+                monthNames: [ "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월" ],
+                monthNamesShort: [ "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월" ],
+                dayNamesMin: [ "일", "월", "화", "수", "목", "금", "토" ],
+            });
+		});
+	});
+</script>
+</th:block>
+</html>

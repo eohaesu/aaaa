@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">스스로 해결 가이드</h1>
+        <button class="c-btn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="content-section">
+            <div class="inputInfo">
+               <div class="select-box">
+                   <select class="select-form">
+                       <option value="">전체</option>
+                       <option value="">모바일</option>
+                       <option value="">인터넷</option>
+                       <option value="">IPTV</option>
+                       <option value="">인터넷 전화</option>
+                       <option value="">스마트홈</option>
+                       <option value="">꿀팁</option>
+                   </select>
+               </div>
+            </div>
+            <div class="inputInfo no_mt">
+                <div class="inputBox">
+                    <div class="custom-info">
+                        <input id="" name="" placeholder="찾고 싶은 내용을 입력하세요" type="text" class="custom-inp">
+                        <button class="find-btn"><span class="hidden">검색</span></button>
+                    </div>
+                </div>
+            </div>
+            <div class="content-row">
+                <ul class="list dot-list">
+                    <li>모바일에서 동영상 및 포스트 확인 시 3G/LTE/5G 네트워크를 이용하는 경우 가입한 요금제에 따라 데이터 이용료가 발생할 수 있습니다.</li>
+                    <li>데이터 이용료가 발생하는 것을 원하지 않는 경우에는 와이파이로 연결해 주시기 바랍니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-section devider">
+            <div class="content-row">
+                <p class="bold">총 <span class="t-special bold">225</span>건 스스로 해결 가이드 방법 검색</p>
+            </div>
+            <div class="content-row vertical">
+                <div class="card pd0">
+                    <a class="card-img play" href="">
+                        <img src="./resources/images/internet_wifi.jpg" alt="[인터넷] 와이파이를 사용하고 싶어요">
+                    </a>
+                    <div class="card-info">
+                        <p class="info-tit bold">[인터넷]</p>
+                        <p class="small no_mt ft-gray">와이파이를 사용하고 싶어요</p>
+                    </div>
+                </div>
+                <div class="card pd0">
+                    <a class="card-img play" href="">
+                        <img src="./resources/images/internet_wifi.jpg" alt="[인터넷] 와이파이를 사용하고 싶어요">
+                    </a>
+                    <div class="card-info">
+                        <p class="info-tit bold">[인터넷]</p>
+                        <p class="small no_mt ft-gray">와이파이를 사용하고 싶어요</p>
+                    </div>
+                </div>
+                <div class="card pd0">
+                    <a class="card-img play" href="">
+                        <img src="./resources/images/internet_wifi.jpg" alt="[인터넷] 와이파이를 사용하고 싶어요">
+                    </a>
+                    <div class="card-info">
+                        <p class="info-tit bold">[인터넷]</p>
+                        <p class="small no_mt ft-gray">와이파이를 사용하고 싶어요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="moreBtn"><span class="more-arrow">더보기</span></button>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+
+<!--모달 팝업 영역-->
+<div class="modal-wrap">
+    <!-- 동영상 팝업 -->
+    <div class="popup popup-2 hidden">
+        <div class="pop-wrap">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">[인터넷] 와이파이를 사용하고 싶어요</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                   <div class="content-section">
+                       <div class="videoPlay">
+                           <iframe frameborder="0" allowfullscreen="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" title="[U+와이파이] 와이파이를 사용하고 싶어요" width="640" height="360" src="https://www.youtube.com/embed/Wyq7fdq5LDI?enablejsapi=1&amp;origin=https%3A%2F%2Fm.lguplus.com&amp;widgetid=1" id="widget2" data-gtm-yt-inspected-103384474_525="true" data-gtm-yt-inspected-103384474_641="true"></iframe>
+                       </div>
+                   </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="standard">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 동영상 팝업 END-->
+</div>   
+<!--모달 팝업 영역 END-->
+</th:block>
+</html>

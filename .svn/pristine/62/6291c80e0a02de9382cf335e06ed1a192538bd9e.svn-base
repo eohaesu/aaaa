@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+		
+		const prodNo = /*[[${prodNo}]]*/ "";
+   	 	const prodNm = /*[[${prodNm}]]*/ "";
+   	 	const svcCd = /*[[${svcCd}]]*/ "";
+   	 	let countSvc = /*[[${countSvc}]]*/ "";
+   	 	
+   	 	if(common.svcType[svcCd] != undefined) {
+	 		$('#svcNm').text(common.svcType[svcCd]);
+	 	} else {
+	 		$('#svcNm').text("기타");
+	 	}
+	 	
+   	 	if(countSvc == 1) {
+   	 		$('#cntcInfo').text(prodNo + " " + prodNm);
+   	 	} else {
+   	 		countSvc -= 1;
+   	 		$('#cntcInfo').text(prodNo + " " + prodNm + " 외 " + countSvc + "건");
+   	 	}
+	 	
+	 	// '납부방법 변경' 버튼 클릭이벤트
+        $('#methodChgBtn').click(function(){
+        	location.href=contextPath + "/changePayment/cp0002";
+        });
+	 
+     	// '결제일 변경' 버튼 클릭이벤트
+        $('#dateChgBtn').click(function(){
+        	location.href=contextPath + "/changePayment/cp0003";
+        });
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">납부방법 관리</h1>
+        <button class="c-btn" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+	    <div class="service-section">
+	        <div class="text-box">
+	            <span class="s-category" id="svcNm">모바일</span>
+	            <p class="s-tit" id="cntcInfo"></p>
+	        </div>
+	    </div>
+	    
+	    <div class="content-section">
+	        <h4 class="section-tit"><span>나의 요금 납부방법</span></h4>
+	        <div class="card no_pt no_pb">
+	            <div class="table-box change-table">
+		            <table class="table">
+		                <tbody th:object="${payMethodInfo}">
+		                    <tr th:if="*{paymMthdCd} == 'GR'">
+		                        <th th:text="납부방법"></th>
+		                        <td><span class="bold" th:text="*{paymMthdNm}"></span></td>
+		                    </tr>
+		                    <tr th:if="*{paymMthdCd} != 'GR'">
+		                        <th th:text="*{paymMthdCd} == 'CM' ? 은행명 : 카드사"></th>
+		                        <td><span th:text="*{paymMthdCd} == 'CM' ? |*{bankNm}은행| : |*{cdcoNm}|"></span><span class="bold" th:text="|(*{paymMthdNm})|"></span></td>
+		                    </tr>
+		                    <tr th:if="*{paymMthdCd} != 'GR'">
+		                        <th th:text="*{paymMthdCd} == 'CM' ? 계좌번호 : 카드번호"></th>
+		                        <td class="bold" th:text="*{paymMthdCd} == 'CM' ? *{eano} : *{ecno}"></td>
+		                    </tr>
+		                    <tr th:if="*{paymMthdCd} != 'GR'">
+		                        <th>출금일</th>
+		                        <td class="bold" th:text="*{paymMthdCd} == 'CM' ? |${withdrawInfo.frstWdrwRgstDd}일| : |매월 ${withdrawInfo.frstWdrwRgstDd}차|"></td>
+		                    </tr>
+		                </tbody>
+		            </table>
+	        	</div>
+	        </div>
+	    </div>
+	    
+	    <div class="btn-group">
+	    	<button class="line" id="methodChgBtn">납부방법 변경</button>
+	        <button class="line" id="dateChgBtn" th:if="${payMethodInfo.paymMthdCd} != 'GR'">결제일 변경</button>
+	    </div>
+        
+        <div class="accordion-group">
+            <div class="accordion-box notice d-accoBox">
+                <div class="accordion-header d-accoBtn">
+                    <div class="text">
+                        <p>납부정보 변경 조건</p>
+                    </div>
+                    <button title="납부정보 변경 조건 내용보기" type="button" class="accordion-btn">
+                        <i class="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="accordion-body">
+                    <ul class="list dot-list">
+                        <li>모바일 가입 없이 구독서비스(유독)만 가입하신 고객님은 정책상 은행(계좌이체)납부로는 변경이 불가 합니다.</li>
+                        <li>가입자 명의의 은행계좌 또는 카드로 변경할 수 있습니다.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="accordion-box notice d-accoBox">
+                <div class="accordion-header d-accoBtn">
+                    <div class="text">
+                        <p>납부방법 변경 안내</p>
+                    </div>
+                    <button title="납부방법 변경 안내 내용보기" type="button" class="accordion-btn">
+                        <i class="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="accordion-body">
+                    <ul class="list dot-list">
+                        <li class="list-tit">[카드 - 은행계좌 변경]</li>
+                        <li>카드에서 은행계좌로 변경 시, 출금일은 매달 15일이며 납부방법변경 방식(즉시, 다음달)에 따라 출금일이 변동될 수 있습니다. 출금 날짜에 통장잔고가 부족할 경우 추가로 출금됩니다.</li>
+                    </ul>
+                    <ul class="list dot-list">
+                        <li class="list-tit">[은행계좌 - 카드 변경]</li>
+                        <li>은행계좌에서 카드로 변경 시, 결제일은 매달 9일이며 납부방법 변경방식(즉시, 다음달)에 따라 출금일이 변동될 수 있습니다.</li>
+                        <li>납부방법은 동일하나 결제 카드 및 은행계좌만 변경한 경우, 변경신청 후 영업일 기준 2~3일 후 해당 은행계좌 또는 카드로 요금이 결제됩니다.</li>
+                        <li>정확한 결제일을 확인하려면 당신의 U<sup>+</sup>앱 내 문의/접수 메뉴에서 문의하시기 바랍니다.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="accordion-box notice d-accoBox">
+                <div class="accordion-header d-accoBtn">
+                    <div class="text">
+                        <p>인증절차 안내</p>
+                    </div>
+                    <button title="인증절차 안내 내용보기" type="button" class="accordion-btn">
+                        <i class="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="accordion-body">
+                    <ul class="list dot-list">
+                        <li>카드 결제에서 은행 계좌로 변경하려면, 자동출금 이용동의 후 SMS 2차 인증이 필요합니다.</li>
+                        <li>카드 결제로 변경하려면, SMS 2차 인증이 필요합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">일시정지 및 해제</h1>
+        <button class="c-btn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="tabmenu-section">
+            <div class="tapnav-wrap">
+                <ul class="tabnav">
+                    <li class=""><a role="button" class="active">일시정지 및 해제</a></li>
+                    <li class=""><a role="button" class="">일시정지 및 해제 내역</a></li>
+                </ul>
+            </div>
+
+            <div class="tabcontent">
+                <!-- 탭01 일시정지 및 해제 -->
+                <div id="tab01" class="tab">
+                    <div class="content-section">
+                        <ul class="service-list">
+                            <li class="bd0">
+                                <div class="check-box">
+                                    <input type="checkbox">
+                                    <label class="t-checkbox">
+                                        <i class="icon"></i>
+                                        <div class="infoTop">
+                                            <div class="flag-group">
+                                                <p class="flag-box able">사용 중</p>
+                                                <!-- 정지일 경우 텍스트 '일시정지'로 교체 / able class 삭제 -->
+                                            </div>
+                                            <span>이동통신</span>
+                                            <span>010-74**-83**</span>
+                                        </div>
+                                        <div class="infoBody">
+                                            <ul>
+                                                <li><span>총 정지횟수</span> <p>0회</p></li>
+                                                <li><span>총 정지일수</span> <p>0일</p></li>
+                                                <li><span>정지 가능일수</span> <p>180일</p></li>
+                                            </ul>
+                                        </div>
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="check-box">
+                                    <input type="checkbox">
+                                    <label class="t-checkbox">
+                                        <i class="icon"></i>
+                                        <div class="infoTop">
+                                            <div class="flag-group">
+                                                <p class="flag-box">일시정지</p>
+                                            </div>
+                                            <span>U+ 인터넷</span>
+                                            <span>와이파이기본_기가안심_1G</span>
+                                        </div>
+                                        <div class="infoBody">
+                                            <ul>
+                                                <li><span>총 정지횟수</span> <p>0회</p></li>
+                                                <li><span>총 정지일수</span> <p>0일</p></li>
+                                                <li><span>정지 가능일수</span> <p>90일</p></li>
+                                            </ul>
+                                        </div>
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="check-box">
+                                    <input type="checkbox" disabled>
+                                    <label class="t-checkbox">
+                                        <i class="icon"></i>
+                                        <div class="infoTop">
+                                            <div class="flag-group">
+                                                <p class="flag-box disabled">불가능</p>
+                                            </div>
+                                            <span>U+ TV</span>
+                                            <span>프리미엄</span>
+                                        </div>
+                                        <div class="infoBody">
+                                            <ul>
+                                                <li><span>총 정지횟수</span> <p>3회</p></li>
+                                                <li><span>총 정지일수</span> <p>90일</p></li>
+                                                <li><span>정지 가능일수</span> <p>0일</p></li>
+                                            </ul>
+                                        </div>
+                                    </label>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="check-box">
+                                    <input type="checkbox">
+                                    <label class="t-checkbox">
+                                        <i class="icon"></i>
+                                        <div class="infoTop">
+                                            <div class="flag-group">
+                                                <p class="flag-box">예약 중</p>
+                                            </div>
+                                            <span>U+ TV</span>
+                                            <span>프리미엄</span>
+                                        </div>
+                                        <div class="infoBody">
+                                            <ul>
+                                                <li><span>총 정지횟수</span> <p>2회</p></li>
+                                                <li><span>총 정지일수</span> <p>80일</p></li>
+                                                <li><span>정지 가능일수</span> <p>10일</p></li>
+                                            </ul>
+                                        </div>
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="btn-group">
+                            <button class="g-line standard">해제</button>
+                            <button class="standard">일시정지</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 탭2 일시정지 및 해제 내역 -->
+                <div id="tab02" class="tab hidden">
+                    <!-- 내역 없을 경우 -->
+                    <div class="caution-section end hidden">
+                        <strong class="tit">
+                           일시정지 및 해제 내역이 없습니다.
+                        </strong>
+                    </div>
+                   
+                    <!-- 내역 있을 경우 -->
+                    <div class="content-section">
+                        <div class="content-row">
+                            <p class="ft-gray">최근 3년 동안의 일시정지 내역을 조회할 수 있습니다.</p>
+                        </div>
+                        <ul class="service-list">
+                            <li>
+                                <div class="t-checkbox">
+                                    <i class="icon"></i>
+                                    <div class="infoTop">
+                                        <div class="flag-group">
+                                            <p class="flag-box">일시정지</p>
+                                        </div>
+                                        <span>이동통신</span>
+                                        <span> (Google 패키지)5G 시그니처</span>
+                                    </div>
+                                    <div class="infoBody">
+                                        <ul>
+                                            <li><span>사용번호</span> <p>010-****-8451</p></li>
+                                            <li><span>정지이유</span> <p>기타</p></li>
+                                            <li><span>정지기간</span> <p>2023-11-07 ~ 2023-11-10</p></li>
+                                            <li><span>정지일수</span> <p>3일</p></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="t-checkbox">
+                                    <i class="icon"></i>
+                                    <div class="infoTop">
+                                        <div class="flag-group">
+                                            <p class="flag-box">정지해제</p> <!-- 해제일 경우 able class 삭제 -->
+                                        </div>
+                                        <span>이동통신</span>
+                                        <span> 010-****-1452</span>
+                                    </div>
+                                    <div class="infoBody">
+                                        <ul>
+                                            <li><span>사용번호</span> <p>010-****-1452</p></li>
+                                            <li><span>정지이유</span> <p>기타</p></li>
+                                            <li><span>정지기간</span> <p>2023-11-07 ~ 2023-11-07</p></li>
+                                            <li><span>정지일수</span> <p>0일</p></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="accordion-group">
+                        <div class="accordion-box notice">
+                            <div class="accordion-header">
+                                <div class="text">
+                                    <p>꼭 확인하세요.</p>
+                                </div>
+                                <button title="꼭 확인하세요 내용보기" type="button" class="accordion-btn">
+                                    <i class="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <div class="accordion-body">
+                                <ul class="list dot-list">
+                                    <li class="list-tit">모바일 일시정지 필수안내</li>
+                                   <li>정지는 1년에 2번 최대 180일간 할 수 있으며 정지 기본료는 4,400원 입니다.</li>
+                                   <li>정지는 명의자 본인만 풀 수 있습니다.</li>
+                                   <li>정지 예약 고객은 22시 이후 순차적으로 정지됩니다.</li>
+                                   <li>멤버십 등급이 다이아로 변경될 수 있습니다.</li>
+                                   <li>휴대폰에 태블릿/스마트기기 요금 무료 이용 중이라면 무료는 중단 됩니다.</li>
+                                   <li>정지 시 결합상품(참쉬운, 투게더, 가족무한사랑 등)할인은 중단되며 구성원의 할인금액은 달라질 수 있습니다.</li>
+                               </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+
+<!--모달 팝업 영역-->
+<div class="modal-wrap">
+    <!-- 모바일 일시정지 팝업 -->
+    <div class="popup popup-2 pauseMobile hidden">
+        <div class="pop-wrap ">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">일시정지 및 해제</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                    <div class="content-section">
+                        <h2 class="section-tit center"><span>일시정지 설정</span></h2>
+                        <!-- 일시정지 사유 -->
+                        <div class="inputInfo">
+                           <label class="info-label">
+                               일시정지 사유
+                               <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                           </label>
+                           <div class="select-box">
+                               <select class="select-form">
+                                   <option value="1">사유선택</option>
+                                   <option value="1">경제적 사정</option>
+                                   <option value="1">해외 출장/여행(단기부재)</option>
+                                   <option value="1">장기일시정지 (군입대, 해외체류, 형집행 등)</option>
+                                   <option value="1">기타</option>
+                               </select>
+                               <p class="error-txt hidden">일시정지 사유를 선택해 주세요.</p>
+                           </div>
+                        </div>
+                        
+                        <!-- 시작일/종료일 지정 -->
+                        <div class="inputInfo">
+                            <label class="info-label">
+                                시작일/종료일 지정
+                                <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                            </label>
+                            <ul class="input-flex">
+                                <li>
+                                    <div class="custom-info calendar">
+                                        <input type="text" class="custom-inp datepicker" id="datepicker" readonly>
+                                        <i class="calendar-icon"></i>
+                                    </div>
+                                </li>
+                                <li class="unit">-</li>
+                                <li>
+                                    <div class="custom-info calendar">
+                                        <input type="text" class="custom-inp datepicker" id="datepicker2" readonly>
+                                        <i class="calendar-icon"></i>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="error-txt hidden">일시정지 시작일을 지정해 주세요.</p>
+                            <p class="error-txt hidden">일시정지 종료일을 지정해 주세요.</p>
+                        </div>
+                        <!-- 시작일/종료일 지정 END -->
+                        
+                        <!-- 모바일 수신금지 신청 -->
+                        <div class="inputInfo">
+                            <label class="info-label">
+                                모바일 수신금지 신청
+                            </label>
+                            <div class="check-box">
+                                <input type="checkbox">
+                                <label class="t-checkbox">
+                                    <i class="icon"></i>
+                                    <div class="text">
+                                        <p>일시정지 서비스를 신청해도 30일 동안은 수신이 가능합니다. 만약 휴대폰 분실로 인한 수신자부담 전화 등이 걱정된다면 이 항목을 선택해 주세요.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- 모바일 수신금지 신청 END -->
+                    </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="g-line">이전</button>
+                        <button class="standard">다음</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 모바일 일시정지 신청 및 변경 안내사항 -->
+    <div class="popup popup-2 guideMobile hidden">
+        <div class="pop-wrap">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">일시정지 및 해제 안내</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                   <div class="content-section">
+                       <ul class="list dot-list">
+                           <li class="list-tit">모바일 일시정지 필수안내</li>
+                           <li>정지는 1년에 2번 최대 180일간 할 수 있으며 정지 기본료는 4,400원 입니다.</li>
+                           <li>정지는 명의자 본인만 풀 수 있습니다.</li>
+                           <li>정지 예약 고객은 22시 이후 순차적으로 정지됩니다.</li>
+                           <li>멤버십 등급이 다이아로 변경될 수 있습니다.</li>
+                           <li>휴대폰에 태블릿/스마트기기 요금 무료 이용 중이라면 무료는 중단 됩니다.</li>
+                           <li>정지 시 결합상품(참쉬운, 투게더, 가족무한사랑 등)할인은 중단되며 구성원의 할인금액은 달라질 수 있습니다.</li>
+                           <li>(남은 할부금있을 경우) 정지중에도 할부금은 나옵니다.</li>
+                           <li>(남은 약정기간이 있을 경우) 정지기간은 약정 기간에 포함되지 않습니다.</li>
+                           <li>휴대폰 분실/파손 보험 가입자는 정지기간에도 월정액을 내야하며, 사고 발생시 보상 가능합니다. (1544-1110을 통해 보상 요청 가능)</li>
+                           <li>중고폰가격보장프로그램(단말보상프로그램) 가입자는 정지기간에도 월정액은 내야합니다.</li>
+                           <li>맘대로폰교체(맘대로 폰교체 플러스) 가입자는 정지기간에도 월정액을 내야하며, 정지 해제 후 교체보상도 가능합니다.</li>
+                           <li>정지 풀으실 때는 명의자 본인만 가능합니다. (미성년자일경우 법정대리인 통화필요)</li>
+                           <li>정지 시 결합상품(참쉬운, 투게더, 가족무한사랑 등)할인은 중단되며 구성원의 할인금액은 달라 질 수 있습니다.</li>
+                           <li>정지기간 중 해외로밍서비스 이용 불가합니다.</li>
+                           <li>법인 명의 휴대폰은 반드시 구비서류 수취 후 정지 해제가 가능합니다.</li>
+                           <li>일시 정지 시 사용일수 한달 미만으로 다음 달 멤버십 등급 다이아로 변경 됩니다.</li>
+                           <li>디즈니+ 월정액을 이용하신다면 공식 웹사이트에 결제 정보가 등록되어 있을 경우, 자동으로 해당 결제 수단으로 디즈니+ 요금이 청구 될 수 있습니다.</li>
+                           <li>휴대폰에 태블릿/스마트기기 요금 무료 이용중인 경우 일시정지 발생 시 무료는 중단 됩니다.</li>
+                           <li>식스플랜 가입자는 180일 이내 요금제 변경 예약이 되어 있는경우, 일시정지시 약정기간을 채우지 못해 위약금 발생될 수 있습니다.</li>
+                           <li>유독서비스는 다음 결제일까지 이용 후 해지됩니다.</li>
+                       </ul>
+                   </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="g-line">이전</button>
+                        <button class="standard">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 홈 일시정지 팝업 -->
+    <div class="popup popup-2 pauseHome hidden">
+        <div class="pop-wrap ">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">일시정지 및 해제</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                    <div class="content-section">
+                        <h2 class="section-tit center"><span>일시정지 설정</span></h2>
+                        <!-- 일시정지 사유 -->
+                        <div class="inputInfo">
+                           <label class="info-label">
+                               일시정지 사유
+                               <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                           </label>
+                           <div class="select-box">
+                               <select class="select-form">
+                                   <option value="1">사유선택</option>
+                                   <option value="1">장비도난(모뎀/PC/AP)</option>
+                                   <option value="1">장애발생/품질불만</option>
+                                   <option value="1">부모요청</option>
+                                   <option value="1">인터넷 미사용</option>
+                                   <option value="1">PC고장/PC없음</option>
+                                   <option value="1">장기일시정지 (군입대, 해외체류, 형집행 등)</option>
+                               </select>
+                               <p class="error-txt hidden">일시정시 사유를 선택해 주세요.</p>
+                           </div>
+                        </div>
+                        
+                        <!-- 시작일/종료일 지정 -->
+                        <div class="inputInfo">
+                            <label class="info-label">
+                                시작일/종료일 지정
+                                <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+                            </label>
+                            <ul class="input-flex">
+                                <li>
+                                    <div class="custom-info calendar">
+                                        <input type="text" class="custom-inp datepicker" id="datepicker" readonly>
+                                        <i class="calendar-icon"></i>
+                                    </div>
+                                </li>
+                                <li class="unit">-</li>
+                                <li>
+                                    <div class="custom-info calendar">
+                                        <input type="text" class="custom-inp datepicker" id="datepicker2" readonly>
+                                        <i class="calendar-icon"></i>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="error-txt hidden">일시정지 시작일을 지정해 주세요.</p>
+                            <p class="error-txt hidden">일시정지 종료일을 지정해 주세요.</p>
+                        </div>
+                        <!-- 시작일/종료일 지정 END -->
+                        
+                        <!-- 홈 서비스 안내메시지 -->
+                        <div class="content-row">
+                            <ul class="list dot-list">
+                                <li class="t-special">인터넷 서비스 일시정지 후에는 U<sup>+</sup>tv를 통해 VOD(영상콘텐츠)를 보거나 넷플릭스, 유튜브, U<sup>+</sup>아이들나라, 디즈니+를 이용할 수 없습니다.</li>
+                            </ul>
+                        </div>
+                        <!--홈 서비스 안내메시지 END -->
+                    </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="g-line">이전</button>
+                        <button class="standard">다음</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 홈 일시정지 신청 및 변경 안내사항 -->
+    <div class="popup popup-2 guideHome hidden">
+        <div class="pop-wrap">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">일시정지 및 해제 안내</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                   <div class="content-section">
+                        <ul class="list dot-list">
+                            <li class="list-tit">홈 일시정지 신청 및 변경</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv의 일시정지는 총 3회까지 신청할 수 있으며 이용기간은 최대 90일까지 입니다.</li>
+                            <li>U<sup>+</sup>인터넷 일시정지 시 와이파이, 홈IoT 등은 함께 이용할 수 없습니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv는 미납금이 있으면 일시정지를 신청 할 수 없습니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv의 경우, 일시정지 기간에도 장비 임대료가 발생합니다. 약정기간은 일시정지 기간만큼 연장됩니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv 일시정지 시 고객님의 안전한 정보보호를 위해 본인 인증 절차가 진행됩니다.</li>
+                            <li>U<sup>+</sup>스마트홈 서비스는 홈페이지에서 일시정지 신청이 불가하므로 고객센터로 문의해 주세요.</li>
+                            <li>일시정지 신청 시 개인고객, 개인사업자고객, 법인사업자고객 등에 따라 필요한 서류가 다르므로 반드시 고객센터에 문의하시길 바랍니다.</li>
+                            <li>U<sup>+</sup>인터넷 일시정지 기간동안 유무선 결합할인, 유선 상품간 결합할인은 적용되지 않습니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv 예약정지/예약해소시 예약일의 22시부터 자동처리 됩니다.</li>
+                            <li>U<sup>+</sup>인터넷 일시정지 기간 동안 U<sup>+</sup>tv는 실시간 채널 외 다른 서비스는 이용이 제한됩니다.(VOD, 넷플릭스, 유튜브, 아이들나라 등등)</li>
+                            <li>넷플릭스 청구대행 또는 프리미엄 넷플릭스 HD/UHD요금제 이용 고객의 경우 U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv 일시정지시에도 넷플릭스 요금은 정상 청구됩니다. 결제를 원하지 않을 경우 넷플릭스 홈페이지 내 멤버십 해지 진행하셔야합니다.</li>
+                       </ul>
+                   </div>
+                   <div class="content-section">
+                       <ul class="list dot-list">
+                            <li class="list-tit">홈 일시정지 해제</li>
+                            <li>일시정지가 해제되는 다음달에는 가입한 상품의 월 정액이 정상 청구됩니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv의 일시정지 해제를 한 뒤에도 서비스를 정상적으로 이용 할 수 없는 경우, 컴퓨터나 공유기, 와이파이 공유기를 껐다가 다시 켜면 됩니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv 일시정지 해제가 되면 요금이 정상 청구됩니다.</li>
+                            <li>U<sup>+</sup>인터넷, U<sup>+</sup>인터넷전화, U<sup>+</sup>tv 일시정지 해제 이후 365일이 경과해야 90일 일시정지를 다시 신청할 수 있습니다.</li>
+                       </ul>
+                   </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="g-line">이전</button>
+                        <button class="standard">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 장기일시정지 안내사항 -->
+    <div class="popup popup-2 guideLong hidden">
+        <div class="pop-wrap">
+            <div class="pop-content">
+                <div class="pop-header">
+                    <h1 class="pop-tit">일시정지 및 해제 안내</h1>
+                    <button class="c-btn">닫기</button>
+                </div>
+                <div class="pop-body">
+                   <div class="content-section mt26">
+                       <div class="caution-section caution">
+                           <strong class="tit">장기일시정지 신청은 전문 상담사에게 신청해 주세요.</strong>
+                       </div>
+                   </div>
+                   <div class="content-section mt26">
+                       <ul class="list">
+                           <li class="list-tit">[장기부재 일시정지 서류 안내]</li>
+                           <li>
+                               <ul class="list dot-list bg-gray">
+                                   <li class="list-tit">▶ 해외근무/유학/체류/여행으로 인한 정지는 아래 서류 중 1가지가 필요해요. (발급일로부터 90일 이내)</li>
+                                   <li class="subdot-list">- 출국 티켓(성명/출국일/목적지/비행기편 명 등 정보가 확인되는 e-Ticket이나 구매내역도 가능)</li>
+                                   <li class="subdot-list">- 해외발령확인서(항공사 직업군은 재직증명서 가능)</li>
+                                   <li class="subdot-list">- 출입국사실증명</li>
+                                   <li class="subdot-list">- 유학/입학 증명서(입학금 영수증 등)</li>
+                                   <li class="subdot-list">※ 대학 합격증은 안 돼요.</li>
+                                   <li class="subdot-list">- 거주지증명서(렌트 계약서, 기숙사 거주 증명서류 등)</li>
+                                   <li class="subdot-list">※ 거주지 총명서는 계약기간이 확인되고, 남은 체류 기간이 6개월 이상 확인되어야 합니다.</li>
+                               </ul>
+                           </li>
+                           <li>
+                               <ul class="list dot-list bg-gray no_pt no_pb">
+                                   <li class="list-tit">▶ 형 집행 입증서류: 수용증명서(발급일로부터 90일 이내)</li>
+                               </ul>
+                           </li>
+                           <li>
+                               <ul class="list dot-list bg-gray no_pt">
+                                   <li class="list-tit">▶ 행방불명으로 인한 정지는 아래 서류 중 1가지가 필요해요. (발급일로부터 90일 이내)</li>
+                                   <li class="subdot-list">- 사건사고 사실확인원</li>
+                                   <li class="subdot-list">- 실종 선고 심판문</li>
+                                   <li class="subdot-list">- 실종 선고 확정 증명원</li>
+                               </ul>
+                           </li>
+                       </ul>
+                   </div>
+                </div>
+                <div class="pop-footer">
+                    <div class="btn-group">
+                        <button class="g-line">이전</button>
+                        <button class="standard">상담사 연결</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>   
+<!--모달 팝업 영역 END-->
+
+<!-- 캘린더 모달용 레이어-->
+<div class="blacklayer hidden"></div> <!-- 캘린더 클릭 시 hidden 제거 -->
+
+<script>
+	$(document).ready(function(){
+		$( function() {
+            $( "#datepicker" ).datepicker({
+                dateFormat: "yy-mm-dd",
+                showMonthAfterYear: true,
+                monthNames: [ "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월" ],
+                monthNamesShort: [ "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월" ],
+                dayNamesMin: [ "일", "월", "화", "수", "목", "금", "토" ],
+            });
+		});
+	});
+</script>
+</th:block>
+</html>

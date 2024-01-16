@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+       	<title>WillandVision 디지털ARS</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, width=device-width">
+		<meta name="_csrf" th:content="${_csrf?.token}"/>
+		<meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+		<link id="contextPathHolder" th:data-contextPath="${#httpServletRequest.getContextPath()}"/>
+		<!-- <link rel="icon" type="image/ico" th:href="@{/static/images/favicon.ico}"> -->
+
+	 	<script th:inline="javascript">
+	 	
+	 		document.addEventListener("DOMContentLoaded", () => {
+		 		sessionStorage.clear();
+	
+		 		let form = document.createElement("form");
+		 		
+		 		const contextPath = document.getElementById("contextPathHolder").getAttribute("data-contextPath") || '';
+
+		 		form.method = "POST";
+		 		form.action = contextPath+"/auth/checkLogin";
+		 		
+		 		let crid = document.createElement("input");
+		 		crid.type = "hidden";
+		 		crid.name = "crid";
+		 		crid.value = /*[[${crid}]]*/ "";
+		 		
+		 		const token = Date.now().toString(36) + Math.random().toString(36).substring(2);
+		 		
+		 		let tokenEle = document.createElement("input");
+		 		tokenEle.type = "hidden";
+		 		tokenEle.name = "btoken";
+		 		tokenEle.value = token;
+		 		
+		 		sessionStorage.setItem("btoken", token);
+		 		
+		 		form.appendChild(crid);
+		 		form.appendChild(tokenEle);
+		 		document.body.appendChild(form);
+		 		form.submit();
+		 		form.remove();
+	 		});
+
+		</script>
+	</head>
+</html>

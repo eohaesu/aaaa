@@ -1,0 +1,79 @@
+spring:
+  profiles:
+    active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  thymeleaf:
+    mode: HTML
+    encoding: UTF-8
+    check-template-location: true
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  mvc:
+    static-path-pattern: /static/**
+    throw-exception-if-no-handler-found: true
+  config:
+    import: classpath:digitalars.properties
+  #DB 설정
+  datasource:
+    hikari:
+      primary:
+        driver-class-name: org.mariadb.jdbc.Driver
+        jdbc-url: jdbc:mariadb://10.224.0.5:3306/dars?characterEncoding=utf8
+        username: darsapp
+        password: Ddarsapp123!
+        auto-commit: true
+        maximum-pool-size: 30 #pool 유지 최대 커넥션 수
+        max-lifetime: 1800000 #커넥션pool의 최대 수명
+        idle-timeout: 600000 #커넥션pool이 일을 안할때 유지 시간
+        connection-timeout: 10000 #pool 커넥션 대기 최소 시간
+        #transaction-isolation: TRANSACTION_READ_UNCOMMITTED #커밋되지않은 트랜잭션 읽기 허용여부
+      secondary:
+        driver-class-name: org.mariadb.jdbc.Driver
+        jdbc-url: jdbc:mariadb://10.224.0.5:3306/dars?characterEncoding=utf8
+        username: darsapp
+        password: Ddarsapp123!
+        maximum-pool-size: 1 #pool 유지 최대 커넥션 수
+        max-lifetime: 30000 #커넥션pool의 최대 수명
+        idle-timeout: 28000 #커넥션pool이 일을 안할때 유지 시간
+        connection-timeout: 10000 #pool 커넥션 대기 최소 시간
+        #transaction-isolation: TRANSACTION_READ_UNCOMMITTED #커밋되지않은 트랜잭션 읽기 허용여부
+  redis:
+    host: localhost
+    port: 6378
+    password: c1ca1dd6-cd4d-4762-a7a6-8d78b17d4f16
+#    sentinel:
+#      master: #Name of the master Redis server.     
+#      nodes: #Comma-separated list of "host:port" pairs.
+#    ssl: false #enable SSL
+#    timeout: #connectiom timeout
+  session:
+    store-type: redis
+    timeout: 600
+    redis:
+      save-mode: always
+      flush-mode: immediate
+      namespace: dars:deotis #같은 redis를 참조하는 컨테이너 존재시 변경
+      configure-action: notify-keyspace-events #key이벤트 수신 알림 설정
+jasypt:
+  encryptor:
+    bean: jasyptStringEncryptor
+    password: #-Djasypt.encryptor.password=로 설정
+server:
+  servlet:
+    context-path: "/dars"
+    session:
+      #timeout: 5m redis session timeout은 application attibute에서 변경
+      cookie:
+        name: DARSdeotis
+        domain: callbot-dev.lguplus.com #subdomain session share
+        http-only: true
+        secure: false
+  shutdown: graceful
+  error:
+    include-exception: true
+    include-stacktrace: never
+    path: /error
+    whitelabel:
+      enabled: true

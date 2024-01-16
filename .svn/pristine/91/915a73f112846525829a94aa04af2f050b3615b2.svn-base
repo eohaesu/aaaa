@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		
+		const msg = /*[[${msg}]]*/ "";
+		$('.tit').text(msg);
+		
+		polling.shortReq();
+		
+		common.blockHistoryBack();  // 이전화면으로 이동 막기
+		
+		setTimeout(() => {
+			// 콜봇으로 전환
+	       	$.post(contextPath+"/api/wms/external/goToEnd", {message : "INPUT_FAIL"}, function(result){
+	   			if(result){
+	   				location.replace(contextPath+"/common/svcEnd");
+	   			}
+	   		});
+		}, 10000);
+		
+		$('#okBtn').click(function(){
+	       	// 콜봇으로 전환
+	       	$.post(contextPath+"/api/wms/external/goToEnd", {message : "INPUT_FAIL"}, function(result){
+	   			if(result){
+	   				location.replace(contextPath+"/common/svcEnd");
+	   			}
+	   		});
+		});
+		
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper endPage no-header">
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="caution-section caution">
+            <strong class="tit"></strong>
+            <p class="txt">10초 뒤 기존 콜봇 서비스로 이동됩니다.</p>
+            <div class="btn-group">
+               <button class="standard" id="okBtn">확인</button>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

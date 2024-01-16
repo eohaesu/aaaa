@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="LOG_HOME" value="c:\\work\\log" />
+	<property name="PATTERN_BASE" value="%d{HH:mm:ss.SSS} [%X{sessionTokenId}] [%X{usrSecurityName}] %highlight(%-5level) %cyan(%-40.40logger{40}) [%M:%L] : %msg %n" />
+	<property name="PATTERN_FILE" value="[%d{HH:mm:ss}:%-3relative] [%X{sessionTokenId}] [%X{usrSecurityName}] [%thread] %-5level %logger{35} - %msg%n"/>
+
+	<!-- Console Trace Log -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+			<layout class="com.deotis.digitalars.system.filter.MaskingLogbackFilter">
+				<maskPattern>\"ssn\"\s*:\s*\"(.*?)\"</maskPattern>
+				<maskPattern>ani=(\d+-?\d+-?\d+)</maskPattern>
+				<pattern>${PATTERN_BASE}</pattern>
+			</layout>
+		</encoder>
+	</appender>
+	<appender name="STDOUT_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+		<queueSize>10000</queueSize>
+		<appender-ref ref="STDOUT" />
+		<includeCallerData>true</includeCallerData>
+	</appender>
+	<!-- File Common Log -->
+	<appender name="FILE_STDOUT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<prudent>true</prudent>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_HOME}/%d{yyyyMMdd}/digitalars.log</fileNamePattern>
+			<maxHistory>0</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${PATTERN_FILE}</pattern>
+		</encoder>
+	</appender>
+	<!-- File Error Log -->
+	<appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<prudent>true</prudent>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_HOME}/%d{yyyyMMdd}/digitalars_error.log</fileNamePattern>
+			<maxHistory>0</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${PATTERN_FILE}</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+	</appender>
+	
+	<!-- JDBC SQL LOG -->
+	<logger name="jdbc.sqlonly" level="DEBUG"/>
+	<logger name="jdbc.sqltiming" level="DEBUG"/>
+
+	<logger name="com.deotis.digitalars" level="DEBUG">
+		<appender-ref ref="STDOUT_ASYNC" />
+		<appender-ref ref="FILE_STDOUT" />
+		<appender-ref ref="FILE_ERROR" />
+	</logger>
+	<logger name="org.springframework" level="ERROR">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE_ERROR" />
+	</logger>
+	
+
+	
+</configuration>

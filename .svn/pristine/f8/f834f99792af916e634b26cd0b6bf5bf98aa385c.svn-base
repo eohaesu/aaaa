@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}">
+<head>
+	<script th:inline="javascript">
+		
+		const menuData = JSON.parse(sessionStorage.getItem("md"));
+		let voiceData = "da_routagent"; //공통 상담사 연결 안내 멘트
+	
+		$(document).ready(function(){
+			
+			common.blockHistoryBack();
+			setMessageData();
+			//여정적재 (공통 상담사 연결 안내 페이지)
+			//call.traceJourney("DARSAGENTT").then(() => {
+			//		call.voiceStop(false, voiceData);
+					setTimeout(timeOutMove, 16500);
+					polling.shortReq(); //start short polling
+			//});
+		});
+		
+		const setMessageData = function(){
+			
+			if(menuData.etc_str){
+				const etc_str = JSON.parse(menuData.etc_str);
+				if(etc_str.confirmMsg){
+					$("#message").empty();
+					$("#message").append(etc_str.confirmMsg);
+				}
+				if(etc_str.audioPath){
+					voiceData = etc_str.audioPath;
+				}
+			}
+		};
+	
+		const timeOutMove = function(){
+			const tcc = common.replaceAt(menuData.tracecode, menuData.tracecode.length-1, "T");
+			const queueNo = menuData.queue_no.split("|");
+			//call.traceJourney(tcc).then(() => {
+				polling.stop();
+				call.connectCounselor(queueNo[1], true);
+			//});
+		}
+
+	</script>
+</head>
+<th:block layout:fragment="content">
+	<body>
+		<div class="ivr">
+	        <!-- header -->
+	        <header class="header_wrapper">
+	            <div class="header">
+	                <span class="header_logo ci_img" th:classappend="${isDirect} == true ? 'ci_direct'"><span class="label">WillandVision</span></span>
+	            </div>
+	        </header>
+	        <!-- //header -->
+			<!-- Contents -->
+			<div class="container_wrapper">
+				<div class="container">
+					<div class="contents">
+	                    <section class="contentTitle">
+	                    </section>
+						<div class="displayMiddle_title no_footer">
+							<section class="row">
+								<div class="imgBox">
+									<p class="imageIcon">
+										<span class="icon transfer_contactCenter"></span><!-- 상담사연결 transfer_contactCenter -->
+									</p>
+								</div>
+								<div class="small">
+									<h2>
+										<span class="custom_text">상담사를 연결해 드리겠습니다.</span>
+									</h2>
+									<p class="custom_text_small">
+										<span id="message">
+											계약자, 피보험자 본인 외에는<br />
+											상담이 제한 될 수 있습니다.<br /><br />
+											정확한 업무처리를 위해 통화 내용은<br />
+											녹음 됩니다.<br />
+											따뜻한 마음으로 대화 부탁드립니다.<br />
+										</span>
+									</p>
+								</div>
+							</section>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- //Contents -->
+		</div>
+	</body>
+</th:block>
+</html>

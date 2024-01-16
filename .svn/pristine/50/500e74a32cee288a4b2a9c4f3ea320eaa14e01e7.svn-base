@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		polling.shortReq(1500, ctrlback);
+		
+		common.blockHistoryBack();  // 이전화면으로 이동 막기
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper endPage no-header">
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="caution-section end">
+            <strong class="tit">
+               서비스가 일시정지 되었습니다.
+            </strong>
+            
+            <p class="txt" id="endSvc">
+            	눈으로 보는 콜봇 서비스를 종료하고<br>
+            	기존 콜봇 서비스로 돌아갑니다.
+            </p>
+            <div class="table-box">
+                <table class="table">
+                    <thead class="thead">
+                        <tr>
+                            <th class="service">서비스명</th>
+                            <th>이용요금</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>와이파이기본_기가안심_1G_FTTH</td>
+                            <td class="amout">10,000원</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <ul class="list dot-list pd0">
+                <li class="subdot-list">*부가세 포함 금액</li>
+            </ul>
+            <div class="btn-group">
+               <button class="standard hidden" id="nextSvc">확인</button>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

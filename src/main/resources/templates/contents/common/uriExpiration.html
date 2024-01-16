@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/single}"
+ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block layout:fragment="content">
+	<div class="ivr">
+		<!-- Contents -->
+		<div class="container_wrapper">
+			<div class="container">
+				<div class="contents">
+					<div class="displayMiddle">
+						<section class="row">
+							<div class="imgBox">
+								<p class="imageIcon logoicon">
+									<span class="icon endCall"></span><!-- ARS종료 endCall -->
+								</p>
+							</div>
+							<div class="small">
+								<h2>
+									<span class="custom_text">[(#{error.wms.uri.expiration})]</span>
+								</h2>
+								<p class="custom_text_small">
+									<span>
+										이용해주셔서 감사합니다.
+									</span>
+								</p>
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //Contents -->
+	</div>
+</th:block>
+</html>
+
+

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}">
+<head>
+	<script th:inline="javascript">
+		$(document).ready(function(){
+			call.traceJourney("DARSDUPEDE");
+		});
+		const dupecallend = ()=>{
+			call.traceJourney("DARSDUPEED").then(() => {
+				call.unbind().then(() => {
+					location.replace(contextPath+"/auth/sessionEnd");
+				});
+			});
+		}
+	</script>
+</head>
+<th:block layout:fragment="content">
+	<div class="ivr">
+		<!-- header -->
+		<header class="header_wrapper hidden">
+			<div class="header">
+				<span class="header_logo ci_img ci_img_combine"><span class="label">WillandVision</span></span>
+			</div>
+		</header>
+		<!-- //header -->
+		<!-- Contents -->
+		<div class="container_wrapper">
+			<div class="container">
+				<div class="contents">
+					<div class="displayMiddle">
+						<section class="row">
+							<div class="imgBox">
+								<p class="imageIcon">
+									<span class="icon info_warning"></span><!-- 오류/주의 info_warning -->
+								</p>
+							</div>
+							<div class="small">
+								<h2>
+									<span class="custom_text">중복된 브라우저 탭이 감지되었습니다.<br />현재 탭을 닫으시고 원본 탭을 사용해 주세요.</span>
+								</h2>
+							</div>
+							<div style="margin-top: 20px;font-size: 15px;">
+								[(#{error.page.duplicate.not.allow})]
+							</div>
+							<ul class="button_group full mT1_5em">
+	                             <li>
+	                                <button type="button" class="button submit" onclick="dupecallend()">통화종료</button>
+	                            </li>
+	                        </ul>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //Contents -->
+	</div>
+</th:block>
+</html>
+
+

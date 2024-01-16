@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/default}">
+
+<head>
+	<link th:href="@{/static/css/common/bootstrap.min.css}" rel="stylesheet" type="text/css"/>
+ 	<script th:inline="javascript">
+ 	$(document).ready(function(){
+ 		polling.longSSE(ctrlback); //start polling
+ 	});
+ 	
+ 	
+ 	let ctrlback = (data) =>{
+ 		$("#recieveIvr").val(JSON.stringify(data));
+	};
+
+ 	let callEndTest = function(){
+		
+		$.post(contextPath+"/api/wms/external/callEnd", function(result){
+			if(result){
+				location.href=contextPath+"/auth/sessionEnd";
+			}
+		});
+		
+	};
+	
+	let voicePlayTest = function(){
+		let voiceArr = [];
+		voiceArr.push({
+			"TYPE"  	: $("#TYPE").val(),
+			"SRC"		: $("#SRC").val(),
+			"TTSCLASS"	: $("#TTSCLASS").val(),
+		});
+		
+		let TocData = new Object();
+		TocData.AUDIOSET = voiceArr;
+		
+		$.post(contextPath+"/api/wms/external/playStart", {tocData : JSON.stringify(TocData)}, function(data){
+			console.log(data);
+		}).fail(function(data, textStatus, xhr){
+			alert(xhr);
+		}).done(function(){
+			
+		});
+		
+	};
+	
+	let playStopTest = function(){
+		
+		$.post(contextPath+"/api/wms/external/playStop", function(result){
+			if(result){
+				console.log(result);
+			}
+		});
+		
+	};
+	
+	let connectCounselorWaitTimeTest = function(){
+		$.post(contextPath+"/api/wms/external/connectCounselorWaitTime", {QDN : $('#QDN').val(), TimeoutMS : $('#TimeoutMS').val()}, function(result){
+			if(result){
+				$("#waitResult").text("waitCount : "+result.waitCount+" waitTime : "+result.waitTime);
+			}
+		});
+	};
+	
+	let callTransferTest = function(){
+		$.post(contextPath+"/api/wms/external/callTransfer", 
+				{
+				VDN : $('#VDN').val(),
+				QDN : $('#T_QDN').val(),
+				UUI : $('#UUI').val(),
+				TimeoutMS : $('#TimeoutMS').val(),
+				Trid : $('#Trid').val()
+				},
+				function(result){
+			if(result){
+				alert(result);
+			}
+		});
+	};
+	
+	let goToEndTest = function(){
+		$.post(contextPath+"/api/wms/external/goToEnd", {message : $('#Message').val()}, function(result){
+			if(result){
+				console.log(result);
+			}
+		});
+	};
+ 	
+	let userDataSaveTest = function(){
+		$.post(contextPath+"/api/wms/external/userDataSave", {userData : $('#userData').val(), appBindDetails : $('#appBindDetails').val(), TimeoutSec : $('#TimeoutSec').val()}, function(result){
+			if(result){
+				alert(result);
+			}
+		});
+	};
+	
+	let sendVariableTest = function(){
+		$.post(contextPath+"/api/wms/external/sendVariable", {Type: $("#Type option:selected").val(), Message : $('#Message2').val()}, function(result){
+			if(result){
+				alert(result);
+			}
+		});
+	};
+	
+	let webLiveTest = function(){
+		$.post(contextPath+"/api/wms/external/webLive", function(result){
+			if(result){
+				alert(result);
+			}
+		});
+	};
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+   	<body>
+   		<div class="bg-white border rounded-5">
+   		<section class="w-100 p-4 d-flex justify-content-left pb-4">
+   			<form>
+			<legend>DEOTIS DigitalArs IVR Test Page</legend>
+			<hr/>
+			<div class="form-outline mb-4">
+			<label class="form-label">Control from IVR</label><br/>
+			<textarea id="recieveIvr" rows="4" cols="100"></textarea>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="Message" class="form-label">Message</label><br/>
+				<textarea id="Message" rows="4" cols="100"></textarea>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="goToEndTest();">Go to End</button>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label class="form-label">Call End</label>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="callEndTest();">Call End</button>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="TTS" class="form-label">TYPE</label>
+				<input type="text" id="TYPE" placeholder="TTS" value=""/><br/>
+				<label for="SRC" class="form-label">SRC</label>
+				<input type="text" id="SRC" placeholder="11.vce" value=""/><br/>
+				<label for="TTSCLASS" class="form-label">TTSCLASS</label>
+				<input type="text" id="TTSCLASS" placeholder="TTSCLASS" value=""/>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="voicePlayTest();">Voice Play</button>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="playStopTest();">Voice Stop</button>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="QDN" class="form-label">QDN</label>
+				<input type="text" id="QDN" placeholder="QDN" value=""/><br/>
+				<label for="TimeoutMS" class="form-label">TimeoutMS</label>
+				<input type="text" id="TimeoutMS" placeholder="TimeoutMS" value=""/>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="connectCounselorWaitTimeTest();">CTI Wait Time</button>
+				<span id="waitResult"></span>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="VDN" class="form-label">VDN</label>
+				<input type="text" id="VDN" placeholder="VDN" value=""/><br/>
+				<label for="QDN" class="form-label">QDN</label>
+				<input type="text" id="T_QDN" placeholder="QDN" value=""/><br/>
+				<label for="UUI" class="form-label">UUI</label>
+				<input type="text" id="UUI" placeholder="UUI" value=""/><br/>
+				<label for="TimeoutMS" class="form-label">TimeoutMS</label>
+				<input type="text" id="TimeoutMS" placeholder="TimeoutMS" value=""/><br/>
+				<label for="Trid" class="form-label">Trid</label>
+				<input type="text" id="Trid" placeholder="Trid" value=""/>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="callTransferTest();">Call Transfer</button>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="userData" class="form-label">UserData</label><br/>
+				<textarea id="userData" rows="4" cols="100">[[${userData}]]</textarea>
+				<br/>
+				<label for="appBindDetails" class="form-label">AppBindDetails</label><br/>
+				<textarea id="appBindDetails" rows="4" cols="100">[[${appBindDetails}]]</textarea>
+				<br/>
+				<label for="TimeoutSec" class="form-label">TimeoutSec</label>
+				<input type="text" id="TimeoutSec" placeholder="TimeoutSec" value=""/>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="userDataSaveTest();">User Data Save</button>
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<select id="Type" class="form-select" aria-label="select type">
+				  <option value="0" selected>Open this select type</option>
+				  <option value="1">DTMF</option>
+				  <option value="2">SelectedMenu</option>
+				  <option value="3">Text</option>
+				</select>
+				<label for="Message" class="form-label">Message</label><br/>
+				<textarea id="Message2" rows="4" cols="100"></textarea>
+				<br/>
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="sendVariableTest();">Send Varible</button>
+			</div>
+			<div class="form-outline mb-4">
+				<button type="button" class="btn btn-primary btn-block mb-4" onclick="webLiveTest();">Web Live</button>
+			</div>
+			</form>
+		</section>
+		</div>
+	</body>
+</th:block>
+</html>

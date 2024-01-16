@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/single}">
+
+<head>
+	<link th:href="@{/static/css/common/bootstrap.min.css}" rel="stylesheet" type="text/css"/>
+ 	<script th:inline="javascript">
+ 	
+ 	$(document).ready(function(){
+		const data = "{\"usid\":\"\", \"event\":\"IMP_EVENT_CONTROL\", \"uri\":\"\", \"param\":{\"busiCode\":\"AUTHSSN000\",\"result\":\"0\" }}";
+
+ 		$('#control').val(data);
+ 	});
+	
+ 	const controlTest = function(){
+		$.ajax({
+			type : "POST",
+			url : $('#contextPathHolder').attr('data-contextPath')+"/api/wms/internal/event/control",
+			data : $('#control').val(),
+			contentType : "application/json; charset=utf-8",
+			success:function(){
+				console.log("control success");
+			}
+		});
+
+	};
+	
+	const waitTimeTest = function(){
+		$.ajax({
+			type : "GET",
+			url : $('#contextPathHolder').attr('data-contextPath')+"/api/wms/internal/event/waitTime",
+			data : {
+				event: $("#event").val(), 
+				usid : $('#usid').val(),
+				waitTime : $('#waitTime').val(),
+				waitCount : $('#waitCount').val()
+					},
+			success:function(){
+				console.log("waittime success");
+			}
+		});
+
+	};
+	
+	const interEnd = function(){
+		$.ajax({
+			type : "GET",
+			url : $('#contextPathHolder').attr('data-contextPath')+"/api/wms/internal/event/callend",
+			data : {
+				event: "IMP_EVENT_CALLEND", 
+				usid : $('#usid').val()
+					},
+			success:function(){
+				console.log("callend success");
+			}
+		});
+
+	};
+
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+   	<body>
+   		<div class="bg-white border rounded-5">
+   		<section class="w-100 p-4 d-flex justify-content-left pb-4">
+   			<form>
+			<legend>DEOTIS DigitalArs IVR Control Test Page</legend>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="control" class="form-label">Control Data</label><br/>
+				<textarea id="control" rows="4" cols="100" style="width:65%"></textarea>
+				<br/>
+				<div style="margin-top:20px;text-align:left;">
+					<button type="button" class="btn btn-primary btn-block mb-4" onclick="controlTest();">CONTROL</button>
+				</div>
+				
+			</div>
+			<hr/>
+			<div class="form-outline mb-4">
+				<label for="event" class="form-label">EVENT</label>
+				<input type="text" id="event" style="width:65%" placeholder="event" value="IMP_EVENT_WAITTIME"/><br/>
+				<label for="usid" class="form-label">USID</label>
+				<input type="text" id="usid" style="width:65%" placeholder="usid" value=""/><br/>
+				<label for="waitTime" class="form-label">waitTime</label>
+				<input type="text" id="waitTime" style="width:65%" placeholder="waitTime" value="5"/><br/>
+				<label for="waitCount" class="form-label">waitCount</label>
+				<input type="text" id="waitCount" style="width:65%" placeholder="waitCount" value="10"/>
+				<br/>
+				<div style="margin-top:20px;text-align:left;">
+					<button type="button" class="btn btn-primary btn-block mb-4" onclick="waitTimeTest();">WAITTIME</button>
+				</div>
+				<br/>
+				<div style="margin-top:20px;text-align:left;">
+					<button type="button" class="btn btn-primary btn-block mb-4" onclick="interEnd();">CALLEND</button>
+				</div>
+			</div>
+			</form>
+		</section>
+		</div>
+	</body>
+</th:block>
+</html>

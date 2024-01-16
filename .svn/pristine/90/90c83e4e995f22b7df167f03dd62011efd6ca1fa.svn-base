@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/default}">
+<head>
+<script th:src="@{/static/js/libs/swiper.min.js}"></script>
+<link th:href="@{/static/css/libs/swiper.css}" rel="stylesheet" type="text/css" />
+
+<script th:inline="javascript">
+
+	const siteInfo = /*[[${siteInfo}]]*/"";
+
+ 	$(window).on('hashchange', function(e) {
+ 		hashHandler();
+ 		footerHashHandler();
+ 	});
+ 	
+	$(document).ready(function(){
+		
+		const wcSeq = /*[[${wcSeq}]]*/ "";
+		const c_name = customerNameByteCheck(/*[[${customerName}]]*/ "", 8);
+		
+		$("#customerName").text(c_name);
+		
+		if(!sessionStorage.getItem("noticeConfirm")){
+			getNotice();		// 공지사항 호출
+		}
+
+		if(sessionStorage.getItem('menuDataTree')){
+			hashHandler();
+		} else {
+			$.post(contextPath+"/common/ajax/getArsMenuDataTree", function(result){
+				if(result){
+					sessionStorage.setItem("menuDataTree", result);
+					hashHandler();
+				}
+			});
+		}
+		
+		if(sessionStorage.getItem('customMenuDataTree')){
+			getCustom();
+		} else {
+			$.post(contextPath+"/main/ajax/getSuggestMenu", function(result){
+				if(result){
+					sessionStorage.setItem("customMenuDataTree", result);
+					getCustom();
+				}
+			});
+		}
+		
+		drawBanner();																										// 배너이미지 호출
+		//getCustom();																										// 커스텀 메뉴 호출(즐겨찾기 & 추천메뉴)
+		polling.shortReq();
+
+		// logo image preview setting
+		const logoImageObj = siteInfo.blob_data;
+		const imgSrc = "data:image/*;base64,"+logoImageObj;
+		document.querySelector('#header_logo').src = imgSrc;
+		document.querySelector('#header_logo').style.height = '50px';
+
+ 	});	
+
+	// 글자수 체크 
+	// byte글자수 체크
+	const customerNameByteCheck = function(name, byteMax) {
+		
+		let decountByte = byteMax;		
+		let checkdata;
+		let byteMaxResult = 0;
+		let returnName = "";
+		
+		for (t = 0; t < name.length; t++) {
+            
+			checkdata = name.charAt(t);
+			
+			if( byteMaxResult < byteMax) {
+		
+				if( escape(checkdata).length > 4 ) {
+					byteMaxResult += 2;
+					decountByte -= 2;
+					returnName += name.charAt(t);
+					
+				} else if( escape(checkdata).length == 1 ) {
+					byteMaxResult += 1;
+					decountByte -= 1;
+					returnName += name.charAt(t);
+				}
+			}
+		}
+
+		return returnName + " 고객님 안녕하세요";			
+		
+	}
+
+	const hashHandler = function(){
+		$("#subMenuDialog").hide();
+
+		if(sessionStorage.getItem("counselorInfo")){
+			sessionStorage.removeItem("counselorInfo");
+		}
+		
+		if(document.location.hash === ''){
+			window.history.pushState(null, document.title, location.href);
+			window.onpopstate = () => { history.go(1); };
+			drawMainMenu();
+			getCustom();
+			//bottom 이전버튼 disabled 추가해야됨
+		}else{
+			window.onpopstate = () => {};
+			let str_hash = document.location.hash;
+			str_hash = str_hash.replace("#","");		
+			const str_hash_arr = common.base64UrlDecode(str_hash).split("|");
+			menuClick(str_hash_arr[0], str_hash_arr[1], str_hash_arr[2]);
+		}
+	};
+
+	// Basic Menu Print
+	const drawMainMenu = function(){
+		
+		$("#mainContainer").show();
+		$("#subContainer").hide();
+		
+		const getMenuArr = sessionStorage.getItem("menuDataTree");
+		const menuArray = JSON.parse(getMenuArr);
+		let htmlStr= "";
+		
+		$.each(menuArray, function(index, value){
+			
+			if(value.menu_depth == 1){
+				
+				htmlStr += "<nav class=\"navi\">";
+				htmlStr += "<ul class=\"mN_list\">";					
+				let indexcnt = 0;
+					
+				menuArray.forEach((obj, key) => {
+							
+					if(value.menu_seq == obj.menu_seq_parent){	
+						indexcnt = indexcnt+1;
+						htmlStr += "<li class=\"mN_list_btn\">";
+						htmlStr += "<a class=\"list_btn\" title=\""+obj.menu_name+"\" href=\"javascript:\" onclick=\"menuHashChange("+key+","+obj.menu_seq+","+1+")\">";									
+						htmlStr += "<span class=\"menuT\">" + indexcnt + ". " + obj.menu_name + "</span>";
+						htmlStr += "</a>";						
+						htmlStr += "</li>";			
+					}
+							
+				});
+						htmlStr += "<li class=\"mN_list_btn\">";
+						htmlStr += "</li>";
+						htmlStr += "<li class=\"mN_list_btn\">";
+						htmlStr += "</li>";				
+						htmlStr += "</ul>";
+						htmlStr += "</nav>";	
+			}
+						
+		});
+		
+		$("#menuArea").html(htmlStr);
+		
+		//관리자 메인메뉴 (root)의 tracecode가 없으면 기본메인 tracecode
+		const mainTraceCode = menuArray[0].tracecode ? menuArray[0].tracecode : siteInfo.site_code+"0VIMAIN";
+		const rootEtcStr = menuArray[0].etc_str != null && menuArray[0].etc_str != "" ? JSON.parse(menuArray[0].etc_str) : null;
+
+		call.traceJourney(mainTraceCode).then(() => {
+			if(sessionStorage.getItem("firstMain") || (navigator.userAgent.toLowerCase().indexOf("tphone") == -1) ){
+				call.voiceStop(false, rootEtcStr.audioPath ? rootEtcStr.audioPath : "dars_main");
+			}else {
+				sessionStorage.setItem("firstMain", true);
+			}
+		});
+	};
+	// Basic Menu Print
+	// Custom Menu Print
+	const getCustom = function(){
+		
+		const getMenuArr = sessionStorage.getItem("customMenuDataTree");
+		const menuArray = JSON.parse(getMenuArr);
+		let htmlarr = "";
+		
+		$.each(menuArray, function(index, value){
+			
+			if(value.menu_depth == 1){
+				
+						htmlarr += "<div class=\"quick-wrapper\">";
+						htmlarr += "<div class=\"title\">";
+						htmlarr += "<span class=\"mark\"></span>";
+						htmlarr += "<span>플러스(+) 메뉴</span>";
+						htmlarr += "</div>";	
+						htmlarr += "<ul class=\"quickMenu\">";
+						
+				menuArray.forEach((obj, key) => {
+					
+					if(value.menu_seq == obj.menu_seq_parent){
+						htmlarr += "<li>";
+						htmlarr += "<a class=\"list_btn l1\" title=\""+obj.menu_name+"\" id=\""+obj.menu_seq+"\" href=\"javascript:\" onclick=\"menuHashChange("+key+","+obj.menu_seq+","+2+")\">";
+						htmlarr += "<span class=\"menuT\">"+obj.menu_name+"</span>";
+						htmlarr += "</a>";
+						htmlarr += "</li>";
+					};	
+				});
+						htmlarr += "</ul>";
+						htmlarr += "</div>";
+			}
+		})
+		
+		$("#customArea").html(htmlarr);
+		
+	};
+
+	// Menu Change 
+	const menuHashChange = function(index, menu_seq, mc_flag){
+
+		const getMenuArr = mc_flag == 1 ? sessionStorage.getItem("menuDataTree") : sessionStorage.getItem("customMenuDataTree");
+		let menuArray = JSON.parse(getMenuArr);
+		const packageName = /*[[${packageName}]]*/ "";
+		const etc_str = menuArray[index].etc_str != null && menuArray[index].etc_str != "" ? JSON.parse(menuArray[index].etc_str) : null;
+
+		if(menuArray[index].menu_type == 2){
+			
+			$("#subMenuClickMsg").html(etc_str.confirmMsg);
+			$("#subMenuDialog #index").val(index);
+			$("#subMenuDialog #packageName").val(packageName);
+			$("#subMenuDialog #mc_flag").val(mc_flag);
+			$("#subMenuDialog").show();
+			
+			call.voiceStop(false, etc_str.audioPath);
+			
+		}else if(menuArray[index].menu_type == 3){ 
+			counselorConnectionClick(index, mc_flag);
+		}else {
+
+			if(typeof $("#"+menu_seq).attr('onclick') !== 'undefined'){
+				$("#"+menu_seq).attr('onclick', '').unbind('click');
+			}
+
+			window.location.hash = "#"+common.base64UrlEncode(index+"|"+menu_seq+"|"+mc_flag);
+
+		}
+		
+		
+	}
+	// Menu Change 
+	// Menu Click
+	const menuClick = function(index, menu_seq, mc_flag){
+		
+		let htmlSubStr = "";
+		const getMenuArr = mc_flag == 1 ? sessionStorage.getItem("menuDataTree") : sessionStorage.getItem("customMenuDataTree");
+		const menuArray = JSON.parse(getMenuArr);
+		
+		//메뉴설명 음성플레이 종료 및 클릭메뉴 음성 시작
+		const etc_str = JSON.parse(menuArray[index].etc_str);
+
+		//메뉴 타이틀
+		htmlSubStr += "<section class=\"contentTitle\">";
+		htmlSubStr += "<span class=\"title\">";
+		htmlSubStr += menuArray[index].menu_name;
+		htmlSubStr += "</span>"
+		htmlSubStr += "</section>";
+		
+		//메인메뉴
+		htmlSubStr += "<section>";
+		htmlSubStr += "<nav class=\"navi sublist\">";
+		htmlSubStr += "<ul class=\"mN_list\">";
+					
+		let number = 0;
+					
+		menuArray.forEach((item, key) => {
+			if(menu_seq == item.menu_seq_parent){
+				htmlSubStr += "<li class=\"mN_list_btn\">";
+				
+				let onclick_str = "";
+					
+				if(item.menu_type == 1){
+					onclick_str = "onclick=\"menuHashChange("+key+","+item.menu_seq+","+mc_flag+")\"";
+				}else if(item.menu_type == 2){
+					onclick_str = "onclick=\"linkClick("+key+","+mc_flag+")\"";
+				}else if(item.menu_type == 3){
+					onclick_str="onclick=\"counselorConnectionClick("+key+","+mc_flag+")\"";
+				}
+					
+				htmlSubStr += "<a class=\"list_btn\" href=\"javascript:\" title=\""+item.menu_name+"\" id=\""+item.menu_seq+"\" "+onclick_str+">"
+				htmlSubStr += "<span class=\"menuT\">";
+				htmlSubStr += "<span class=\"numbering\">" + (parseInt(number)+1)+ "</span>" +item.menu_name;
+				htmlSubStr += "</span>";
+				htmlSubStr += "</a>";
+				htmlSubStr += "</li>";
+				number++
+			}
+		})
+		
+		htmlSubStr += "</ul>"
+		htmlSubStr += "</nav>";
+		htmlSubStr += "</section>";
+		
+		$("#mainContainer").hide();
+		$("#subContainer").show();
+		$("#subContainerContent").html(htmlSubStr);
+		
+		call.traceJourney(menuArray[index].tracecode).then(() => {
+			call.voiceStop(false, etc_str.audioPath);
+		});
+
+	}
+	// Menu Click
+	// Menu Link Click	
+	const linkClick = function(index, mc_flag){
+		const menuArray = JSON.parse(mc_flag == 1 ? sessionStorage.getItem("menuDataTree") : sessionStorage.getItem("customMenuDataTree"));
+		const menu_name = menuArray[index].menu_name;
+		
+		const menu_number = menuArray[index].menu_number;
+		const packageName = /*[[${packageName}]]*/ "";
+		const etc_str = menuArray[index].etc_str != null && menuArray[index].etc_str != "" ? JSON.parse(menuArray[index].etc_str) : null;
+		
+		if(etc_str == null){
+			alert("메뉴 구성정보 오류\n관리자에게 문의하세요.");
+			return;
+		}
+		
+		const externalYn = etc_str.urlexternalyn;	//내부,외부 링크 구분
+		
+		if(externalYn > 0){
+			$("#subMenuClickMsg").html(etc_str.confirmMsg);
+			$("#subMenuDialog #index").val(index);
+			$("#subMenuDialog #packageName").val(packageName);
+			$("#subMenuDialog #mc_flag").val(mc_flag)
+			
+			$("#subMenuDialog").show();
+			
+			//메뉴설명 음성플레이 종료 및 클릭메뉴 음성 시작
+			call.voiceStop(false, etc_str.audioPath);
+		}else{
+			location.assign(contextPath + menuArray[index].menu_url);
+		}
+		
+		
+	}
+	// Menu Link Click
+	// Menu Link Move
+	const linkMove = function(){
+		
+		const packageName = /*[[${packageName}]]*/ "";
+		const mc_flag = $("#subMenuDialog #mc_flag").val();
+		const menuArray = JSON.parse(mc_flag == 1 ? sessionStorage.getItem("menuDataTree") : sessionStorage.getItem("customMenuDataTree"));
+		const temp = menuArray[$("#subMenuDialog #index").val()];		
+		const etc_str = temp.etc_str != null && temp.etc_str != "" ? JSON.parse(temp.etc_str) : null;
+		const etcJson = temp.etc_str;		
+		const targetFlag = JSON.parse(etcJson).target_flag;		// 새창여부	
+		const extraTrace = JSON.parse(etcJson).extraTrace;		// 여정확장	
+		const wcSeq = /*[[${wcSeq}]]*/ "";		
+		
+		let menu_url = temp.menu_url;
+
+		if(packageName && (packageName === etc_str.packageAndroid || packageName === etc_str.packageIos)){
+			menu_url = temp.deep_link;
+		}
+		
+		menu_url = menu_url.replaceAll(" ", "");
+													
+		let winOpen;										
+		
+		if(typeof $("#"+temp.menu_seq).attr('onclick') !== 'undefined'){
+			$("#"+temp.menu_seq).attr('onclick', '').unbind('click');
+		}	
+		
+		if(navigator.userAgent.toLowerCase().indexOf("safari") > -1 ) {
+			if(targetFlag == "1" ) {
+				winOpen = null;
+			}else if(targetFlag == "2") {
+				winOpen = window.open();
+			}	
+		}
+		
+		call.traceJourney(temp.tracecode).then(() => {
+			//콜종료 후 모바일 서비스 이동
+			call.unbind().then(() => {
+				common.setSessionEnd().then(() => {
+					if(extraTrace > 0){
+						menu_url += new URLSearchParams(menu_url).size > 0 ? "&" : "?"+"wcseq="+wcSeq;
+					}
+					if(targetFlag == "1") {
+						location.assign(menu_url);
+					} else {
+						if( navigator.userAgent.toLowerCase().indexOf("safari") > -1 ) {
+							winOpen.location = returnUrl;
+						} else {
+							const childPop = window.open(menu_url);
+							
+							try {
+								childPop.focus();
+							} catch(e) {
+								alert("팝업이 차단되어 있습니다. 팝업 차단해제 후 다시 이용해주세요");
+							}
+						}
+					}
+					
+				});
+			});
+		});
+		
+	}	
+	// Counselor direct Link Move
+	const counselorConnectionClick = function(index, mc_flag){
+		const menuArray = JSON.parse(mc_flag == 1 ? sessionStorage.getItem("menuDataTree") : sessionStorage.getItem("customMenuDataTree"));
+		const etc_str = menuArray[index].etc_str != null && menuArray[index].etc_str != "" ? JSON.parse(menuArray[index].etc_str) : null;
+		const temp = menuArray[index];
+		
+		if(typeof $("#"+temp.menu_seq).attr('onclick') !== 'undefined'){
+			$("#"+temp.menu_seq).attr('onclick', '').unbind('click');
+		}
+		
+		call.traceJourney(temp.tracecode).then(() => {
+			call.counselorCheckTime(etc_str.cs_time_st, etc_str.cs_time_ed).then((result) => {
+				if(result){
+					sessionStorage.setItem("md", JSON.stringify(menuArray[index]));
+					location.assign(contextPath + "/counselor/connect/confirm");
+				}else{
+					location.assign(contextPath+"/common/timeGuide");
+				}
+			});
+		});
+	}
+
+	// Notice Print
+	const getNotice = function(){
+		$.post(contextPath+"/main/ajax/getNotice", function(result){
+			if(result){
+				$("#noticeDialog #noticeTitleMsg").text(result.n_subject);
+				$("#noticeDialog #noticeMsg").html(result.n_data);
+				$("#noticeDialog").show();
+			} else {
+				//공지사항 데이터가 없을 시
+				sessionStorage.setItem("noticeConfirm", "success");
+				tPhoneCehck();
+			}
+		});
+	};
+
+	// TPhone Check
+	const tPhoneCehck = function() {
+		
+		if(navigator.userAgent.toLowerCase().indexOf("tphone") > -1 ) {
+			
+			$("#subMenuClickMsgTphone").html("T전화를 통한 DigitalARS사용은 불가합니다. 음성ARS로 이동합니다.");
+			$("#subMenuDialogTphone #indexTphone").val(index);
+			$("#subMenuDialogTphone #packageNameTphone").val(packageName);
+			$("#subMenuDialogTphone #mc_flagTphone").val(mc_flag);
+			$("#subMenuDialogTphone").show();
+			setTimeout(() => connectVoiceArs(), 4000);
+		
+		}
+		
+	}
+
+	// Banner IMG Print
+	const drawBanner = function(){
+		$.post(contextPath+"/main/ajax/getMainBanner", function(result){
+			
+			if(result){
+				
+				sessionStorage.setItem("Banner", result);
+				
+				const bannerList = JSON.parse(result);		
+				
+				let htmlStr = "";
+				
+					htmlStr += "<div class=\"swiper-container banner-swiper swiperWrap\">";
+					htmlStr += "<div class=\"swiper-wrapper\">";
+			
+				bannerList.forEach((obj, key) => {
+
+					const imgSrc = "data:image/*;base64,"+obj.blob_data;
+					
+					htmlStr += "<div class=\"swiper-slide\" id=\"ev02\">";
+					htmlStr += "<a href=\"javascript:\" target=\"\" title=\"\" onclick=\"bannerClick("+key+")\" >";
+					htmlStr += "<img src=\""+imgSrc+"\" alt=\"\">";
+					htmlStr += "</a>";
+					htmlStr += "</div>";
+				});
+						
+					htmlStr += "</div>";
+					htmlStr += "<div class=\"swiper-pagination\" id=\"swiper-pagination\"></div>";
+					htmlStr += "</div>";
+				
+				$("#bannerArea").html(htmlStr);
+				
+				initSwiper(bannerList.length);
+				
+			}
+			
+		});
+		
+	};
+	// Banner IMG Print
+	// Banner Click
+	const bannerClick = function(index){
+		
+		const menuArray = JSON.parse(sessionStorage.getItem("Banner"));	
+		const etc_str = menuArray[index].etc_str != null && menuArray[index].etc_str != "" ? JSON.parse(menuArray[index].etc_str) : null;
+		
+		if(etc_str == null){
+			alert("배너 구성정보 오류\n관리자에게 문의하세요.");
+			return;
+		}
+		
+		if(etc_str != null){
+			$("#bannerMenuClickMsg").html(etc_str.confirmMsg);
+		}
+		
+		$("#bannerMenuDialog #index").val(index);		
+		$("#bannerMenuDialog").show();
+		
+		//메뉴설명 음성플레이 종료 및 클릭메뉴 음성 시작  ( 추후 변경 필요 )
+		call.voiceStop(false, etc_str.audioPath);
+	}
+	// Banner Click
+	// Banner Link Move
+	const bannerLinkMove = function(index) {
+		
+		const packageName = /*[[${packageName}]]*/ "";
+		
+		const menuArray = JSON.parse(sessionStorage.getItem("Banner"));
+		const temp = menuArray[$("#bannerMenuDialog #index").val()];		
+		const etc_str = temp.etc_str != null && temp.etc_str != "" ? JSON.parse(temp.etc_str) : null;
+		const wcSeq = /*[[${wcSeq}]]*/ "";	
+		const etcJson = temp.etc_str;
+		const targetFlag = JSON.parse(etcJson).target_flag;		// 새창여부																						
+		const extraTrace = JSON.parse(etcJson).extraTrace;		// 여정확장	
+		
+		let menu_url = temp.url_link;
+		
+		if(packageName && (packageName === etc_str.packageAndroid || packageName === etc_str.packageIos)){
+			menu_url = temp.deep_link;
+		}
+		
+		menu_url = menu_url.replaceAll(" ", "");
+
+		let winOpen;		
+		if(navigator.userAgent.toLowerCase().indexOf("safari") > -1 ) {
+			
+			if(targetFlag == "1" ) {
+				winOpen = null;
+			}else if(targetFlag == "2") {
+				winOpen = window.open();
+			}	
+		}		 		
+		
+		call.traceJourney(temp.tracecode).then(() => {
+			//콜종료 후 모바일 서비스 이동
+			call.unbind().then(() => {
+				common.setSessionEnd().then(() => {			
+					if(extraTrace > 0){
+						menu_url += new URLSearchParams(menu_url).size > 0 ? "&" : "?"+"wcseq="+wcSeq;
+					}
+					if(targetFlag == "1") {
+						location.assign(menu_url);
+					} else {
+						if( navigator.userAgent.toLowerCase().indexOf("safari") > -1 ) {
+							winOpen.location = returnUrl;
+						} else {
+							const childPop = window.open(menu_url);
+							
+							try {
+								childPop.focus();
+							} catch(e) {
+								alert("팝업이 차단되어 있습니다. 팝업 차단해제 후 다시 이용해주세요");
+							}
+						}
+					}
+					
+				});
+			});
+		});
+
+	}
+
+	// Banner Link Move
+	
+	const initSwiper = function(size){
+		const swiper = new Swiper(".banner-swiper", {
+			slidesPerView: 'auto',
+			loop: true,
+			autoplay: {
+				delay: 2000,
+			},
+			navigation: {
+				nextEl: ".swiper-button-next",
+				prevEl: ".swiper-button-prev",
+			},
+		});
+	};
+	
+	const subMenuDialogCancel = function(){
+		$("#subMenuDialog").hide();
+		$("#subMenuDialogEffect").hide();
+		//메뉴설명 음성플레이 종료 및 클릭메뉴 음성 시작
+		call.voiceStop(false, "dars_main");
+	}
+
+	const counselerDialogCancel = function() {
+		$("#counselorMenuDialog").hide();
+	}
+	
+	const noticeDialogCancel = function() {
+		sessionStorage.setItem("noticeConfirm", "success");
+		$("#noticeDialog").hide();
+		tPhoneCehck();
+	}
+	
+	const bannerMenuDialogCancel = function() {
+		$("#bannerMenuDialog").hide();
+		//메뉴설명 음성플레이 종료 및 클릭메뉴 음성 시작
+		call.voiceStop(false, "dars_main");
+	}
+	
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+
+	<body>
+		<div class="ivr">
+			<!-- header -->
+			<header class="header_wrapper">
+				<div class="header" style="display: flex;justify-content: center;">
+					<!-- <span class="header_logo ci_img ci_img_combine"> -->
+						<!-- <span class="label">KB캐피탈</span> -->
+					<img src="" id="header_logo" />
+				</div>
+			</header>
+			<!-- //header -->
+			<!-- main container -->
+			<div class="container_wrapper" id="mainContainer">
+				<div class="container index">
+					<div class="contents">
+						<section class="info">
+							<div class="infotitle">
+								<ul>
+									<li><span class="custom_text" id="customerName"></span></li>
+									<li><span class="custom_text"></span></li>
+								</ul>
+							</div>
+						</section>
+						<div class="menubg">
+							<section class="mT-6em pB1_25em" id="customArea"></section>
+						</div>
+						<section id="menuArea"></section>
+						<section class="mB0_5em" id="bannerArea"></section>
+						<!-- IVR TEST PAGE LINK -->
+						<th:block th:if="${ivrTest}">
+							<a th:href="@{/test/ivrTestMock}">IVR TEST PAGE</a>
+						</th:block>
+					</div>
+				</div>
+			</div>
+			<!-- main container -->
+			<!-- sub container -->
+			<div class="container_wrapper" id="subContainer"
+				style="display: none;">
+				<div class="container sdefaultMenu">
+					<div class="contents contentline" id="subContainerContent"></div>
+				</div>
+			</div>
+			<!-- sub container -->
+		</div>
+
+		<div id="subMenuDialog" style="display: none;">
+			<!-- Contents -->
+			<div class="noticeModal overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<p>
+										<span class="custom_text" id="subMenuClickMsg"></span>
+									</p>
+								</div>
+								<input type="hidden" id="index"> <input type="hidden" id="packageName"> <input type="hidden" id="mc_flag">
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit" onclick="subMenuDialogCancel()">취소</button>
+								</li>
+								<li>
+									<button type="button" class="button fit submit" onclick="linkMove()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+			<!-- //Contents -->
+		</div>
+		
+		<div id="subMenuDialogEffect" style="display: none;">
+			<!-- Contents -->
+			<div class="noticeModal overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<p>
+										<span class="custom_text" id="subMenuClickMsgEffect"></span>
+									</p>
+								</div>
+								<input type="hidden" id="indexEffect"> <input type="hidden" id="packageNameEffect"> <input type="hidden" id="mc_flagEffect">
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit submit" onclick="subMenuDialogCancel()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+			<!-- //Contents -->
+		</div>
+
+		<div id="bannerMenuDialog" style="display: none;">
+			<!-- Contents -->
+			<div class="noticeModal overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<p>
+										<span class="custom_text" id="bannerMenuClickMsg"></span>
+									</p>
+								</div>
+								<input type="hidden" id="index">
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit" onclick="bannerMenuDialogCancel()">취소</button>
+								</li>
+								<li>
+									<button type="button" class="button fit submit" onclick="bannerLinkMove()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+			<!-- //Contents -->
+		</div>
+
+		<div id="subMenuDialogTphone" style="display: none;">
+			<!-- Contents -->
+			<div class="noticeModal overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<p>
+										<span class="custom_text" id="subMenuClickMsgTphone"></span>
+									</p>
+								</div>
+								<input type="hidden" id="indexTphone"> <input type="hidden" id="packageNameTphone"> <input type="hidden" id="mc_flagTphone">
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit submit" onclick="connectVoiceArs()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+			<!-- //Contents -->
+		</div>
+
+		<!-- Notice Area -->
+		<div id="noticeDialog" style="display: none;">
+			<div class="emergency overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<h2 id="noticeTitleMsg"></h2>
+									<p>
+										<span class="custom_text" id="noticeMsg"></span>
+									</p>
+								</div>
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit special" onclick="noticeDialogCancel()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+		</div>
+		<!-- Notice Area -->
+	</body>
+</th:block>
+
+</html>

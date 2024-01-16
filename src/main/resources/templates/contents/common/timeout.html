@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+	<!-- Set the viewport. -->
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, target-densitydpi=medium-dpi, scrollbar-width=thin" />
+	<!-- Disable automatic phone number detection. -->
+	<meta name="format-detection" content="telephone=no, address=no, email=no" />
+	<meta name="theme-color" content="#ffffff">
+	<title>U+ 눈으로 보는 콜봇 Wiseportal</title>
+
+	<!-- Css -->
+	<link rel="stylesheet" type="text/css" th:href="@{/static/css/common.css}" />
+	<link rel="stylesheet" type="text/css" th:href="@{/static/css/style.css}" />
+
+	<!-- Scripts -->
+	<script type="text/javascript" th:src="@{/static/js/libs/jquery-3.6.0.min.js}"></script>
+	
+</head>
+<body>
+
+<div class="page-wrapper endPage no-header">
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="caution-section caution">
+            <strong class="tit">
+                입력시간이 초과되었습니다.<br>
+                일정시간 서비스 이용이 없을 경우 고객님의 안전한 개인정보 보호를 위해 
+                눈으로 보는 콜봇 서비스를 종료하고 기존 콜봇 서비스로 이동됩니다.
+            </strong>
+            <div class="btn-group">
+               <button class="standard">확인</button>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+
+</body>
+</html>

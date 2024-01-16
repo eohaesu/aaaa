@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/single}">
+
+<head>
+  <link th:href="@{/static/css/common/bootstrap.min.css}" rel="stylesheet" type="text/css" />
+  <style>
+    div {
+      padding: 10px;
+    }
+    .content {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .banner {
+      display: none;
+      height: 50px;
+      width: 500px;
+      border: 1px solid #000000;
+      align-items: center;
+      justify-content: center;
+    }
+    .custom {
+      display: none;
+      height: 150px;
+      width: 500px;
+      border: 1px solid #000000;
+      align-items: center;
+      justify-content: center;
+    }
+    .main {
+      display: none;
+      height: 350px;
+      width: 500px;
+      border: 1px solid #000000;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+  <script th:inline="javascript">
+    const mainTop = /*[[${top}]]*/'';
+    const mainMiddle = /*[[${middle}]]*/'';
+    const mainBottom = /*[[${bottom}]]*/'';
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('#mainTop').appendChild(document.querySelector(`#${mainTop}`));
+      document.querySelector(`#${mainTop}`).style.display = 'flex';
+      document.querySelector('#mainMiddle').appendChild(document.querySelector(`#${mainMiddle}`));
+      document.querySelector(`#${mainMiddle}`).style.display = 'flex';
+      document.querySelector('#mainBottom').appendChild(document.querySelector(`#${mainBottom}`));
+      document.querySelector(`#${mainBottom}`).style.display = 'flex';
+    });
+  </script>
+</head>
+
+<th:block layout:fragment="content">
+
+  <body>
+    <div class="content"
+      th:style="${gradation == 'Y'} ? 'background: linear-gradient(to left, ' + ${colorStart} + ', ' + ${colorEnd} + ');' : 'background-color: ' + ${colorStart} + ';'">
+      <span>template3 type[[${type}]]</span>
+      <span th:text="${template}"></span>
+      <div id="mainTop">
+      </div>
+      <div id="mainMiddle">
+      </div>
+      <div id="mainBottom">
+      </div>
+      <div id="banner" class="banner"
+        th:style="${gradation == 'Y'} ? 'background: linear-gradient(to right, ' + ${colorStart} + ', ' + ${colorEnd} + ');' : 'background-color: ' + ${colorStart} + ';'">
+        [[${banner}]]
+      </div>
+      <div id="custom" class="custom"
+        th:style="${gradation == 'Y'} ? 'background: linear-gradient(to right, ' + ${colorStart} + ', ' + ${colorEnd} + ');' : 'background-color: ' + ${colorStart} + ';'">
+        [[${custom}]]
+      </div>
+      <div id="main" class="main"
+        th:style="${gradation == 'Y'} ? 'background: linear-gradient(to right, ' + ${colorStart} + ', ' + ${colorEnd} + ');' : 'background-color: ' + ${colorStart} + ';'">
+        [[${main}]]
+      </div>
+      <div>
+        <a th:href="@{/test/template2?type=1}">type1</a>
+        <a th:href="@{/test/template2?type=2}">type2</a>
+        <a th:href="@{/test/template2?type=3}">type3</a>
+        <a th:href="@{/test/template2?type=4}">type4</a>
+        <a th:href="@{/test/template2?type=5}">type5</a>
+        <a th:href="@{/test/template2?type=6}">type6</a>
+      </div>
+      <div>
+        <a th:href="@{/test/templateIndex}">template 홈으로</a>
+      </div>
+    </div>
+  </body>
+</th:block>
+
+</html>

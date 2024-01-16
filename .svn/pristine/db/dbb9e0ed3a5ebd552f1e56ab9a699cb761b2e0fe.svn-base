@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+
+		polling.shortReq(1500, ctrlback);
+		
+		common.blockHistoryBack();  // 이전화면으로 이동 막기
+		
+        const payBank =	sessionStorage.getItem("payBank");	// 선택한 간편결제 은행
+
+		$('#nextBtn').click(function(){
+			$.ajax({
+				url : contextPath + "/payment/getBillComplete",
+                type : "POST",
+                dataType : "json",
+                data : { bank : payBank },
+                success : function(data) {
+                	if(data == "success") {
+                		location.replace(contextPath+"/payment/p0003");     // 납부완료화면
+                	} else {
+                		location.replace(contextPath + "/payment/p0004");   // 납부실패화면
+                	}
+                    
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                	location.replace(contextPath + "/payment/p0004");   // 납부실패화면
+                }
+			});
+		});
+		
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">요금 바로 납부하기</h1>
+        <button class="c-btn" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="content-section">
+            <h2 class="section-tit"><span>간편결제 완료</span></h2>
+            <ul class="list">
+                <li class="list-tit">간편결제 앱 결제가 완료된 경우</li>
+                <li class="ft-gray">화면 하단의 <span class="t-special bold">[다음]</span> 버튼을 눌러주세요</li>
+            </ul>
+        </div>
+        
+        <div class="content-section">
+            <ul class="list">
+                <li class="list-tit">간편결제 앱 결제가 정상적으로 진행되지 않은 경우</li>
+                <li>
+                    <ul class="list dot-list bg-gray">
+                    <li>오류가 계속 발생하는 경우 고객센터로 문의해 주세요.</li>
+                    <li class="subdot-list">- LG 유플러스 고객센터 : 1544-0010(유료)</li>
+                    <li class="subdot-list">- PAYCO 고객센터 : 1544-6891</li>
+                    <li class="subdot-list">- 토스 고객센터 : 1599-4905</li>
+                    <li class="subdot-list">- 카카오페이 고객센터 : 1644-7405</li>
+                </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="btn-group">
+            <!--<button class="g-line">이전</button>-->
+            <button class="standard" id="nextBtn">다음</button>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

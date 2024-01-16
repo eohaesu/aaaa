@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){	
+		
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+		
+		// 출금일 변경이벤트
+		$('#chgWithdDt').change(function(){
+			if($('#chgWithdDt > option:selected').val() == '') {
+                $('#chgWithdDt').closest('div').addClass("error");
+                $('#chgWithdDt').closest('div').next().removeClass("hidden");
+                $('#nextBtn').attr('disabled', true);
+            } else {
+                $('#chgWithdDt').closest('div').removeClass("error");
+                $('#chgWithdDt').closest('div').next().addClass("hidden");
+                $('#nextBtn').removeAttr('disabled');
+            }
+		});
+		
+	 	// 다음 버튼 클릭이벤트 (SMS 본인인증)
+    	$('#nextBtn').click(function(){
+    		$.ajax({
+    			url : contextPath + "/common/getAuthPopup",
+				type : "POST",
+				dataType : "json",
+				success : function(data) {
+					$('#myName').val(data.custNm);
+					$('#myPhoneNum').val(data.telNo);
+					$('#smsAuthPopup').removeClass('hidden');
+				},
+				error : function(jqXHR, textStatus, errorThrown) {
+					location.replace(contextPath+"/common/apiError");
+				}
+    		})
+    	});
+	 	
+	 	// 본인인증 완료 후 확인 버튼 클릭이벤트 (결제일변경진행)
+        $('#smsAuthOk').click(function(){
+            $.ajax({
+                url : contextPath + "/changePayment/chgPayWithdraw",
+                type : 'POST',
+                dataType : 'text',
+                data : {
+                    frstWdrwRgstDt : $('#chgWithdDt option:selected').val(),    // 출금등록일(변경후) 
+                    frstWdrwRgstDay : /*[[${withdrawDt}]]*/ "",                 // 출금등록일(변경전)
+                    paymMthdCd : /*[[${billInfo.paymMthdCd}]]*/ ""              // 납부방법코드
+                },
+                success : function(data) {
+                    if(data == 'success') {
+                        location.href=contextPath + "/changePayment/cp0005";
+                    } else {
+                    	location.replace(contextPath+"/changePayment/cp0007");
+                    }
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                	location.replace(contextPath+"/changePayment/cp0007");
+                }
+            });
+        });
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">납부방법 관리</h1>
+        <button class="c-btn" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+	    <div class="content-section">
+	        <h2 class="section-tit"><span>변경정보 입력</span>></h2>
+            <!-- 결제일 변경 시 -->
+            <div class="chpayemtDay" th:object="${billInfo}">
+                <!-- 은행명, 카드사 -->
+                <div class="inputInfo">
+                   <label id="payMthdNm" class="info-label" th:text="*{paymMthdCd} == 'CM' ? 은행명 : 카드사"></label>
+                   <div class="custom-info">
+                       <input id="" type="text" class="custom-inp" th:value="*{paymMthdCd} == 'CM' ? |*{bankNm}은행| : *{cdcoNm}" readonly>
+                   </div>
+                </div>
+
+                <!-- 계좌번호, 카드번호 -->
+                <div class="inputInfo">
+                    <label class="info-label" th:text="*{paymMthdCd} == 'CM' ? 계좌번호 : 카드번호"></label>
+                    <div class="custom-info">
+                        <input id="" type="tel" class="custom-inp" th:value="*{paymMthdCd} == 'CM' ? *{eano} : *{ecno}" readonly>
+                    </div>
+                </div>
+                
+                <!-- 출금일 -->
+                <div class="inputInfo">
+                   <label for="withdrawalDate" class="info-label">
+                       출금일
+                   </label>
+                   <div class="select-box">
+                       <select id="chgWithdDt" class="select-form">
+                           <option value="">출금일 선택</option>
+                           <option th:if="*{paymMthdCd} == 'CC'" value="1">1차 (9일)</option>
+                           <option th:if="*{paymMthdCd} == 'CC'" value="2">2차 (1차 결제일+평일4일)</option>
+                           <option th:if="*{paymMthdCd} == 'CC'" value="3">3차 (2차 결제일+평일3일)</option>
+                           <option th:if="*{paymMthdCd} == 'CC'" value="4">4차 (3차 결제일+평일3일)</option>
+                           <option th:if="*{paymMthdCd} == 'CM'" value="18">18일</option>
+                           <option th:if="*{paymMthdCd} == 'CM'" value="22">22일</option>
+                           <option th:if="*{paymMthdCd} == 'CM'" value="26">26일</option>
+                       </select>
+                   </div>
+                   <p class="error-txt">출금일을 선택해 주세요.</p>
+                </div>
+            </div>
+            <!-- 결제일 변경 시 END-->
+	    </div>
+	    
+	    <div class="btn-group">
+	        <button class="g-line" id="backBtn">이전</button>
+	        <button class="standard" id="nextBtn" disabled>다음</button>
+	    </div>
+	    
+	    <div class="accordion-group">
+            <div class="accordion-box notice d-accoBox">
+                <div class="accordion-header d-accoBtn">
+                    <div class="text">
+                        <p>꼭 확인하세요.</p>
+                    </div>
+                    <button title="납부정보 변경 조건 내용보기" type="button" class="accordion-btn">
+                        <i class="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="accordion-body">
+                    <ul class="list dot-list">
+                        <li>현재 납부방법이 은행자동이체 또는 신용카드 자동이체인 경우에만 결제일을 변경할 수 있습니다.</li>
+                        <li>이번 달 결제일 이전에 오늘 이후 날짜로 변경하면 이번 달부터 적용됩니다.</li>
+                    	<li>이번 달 결제일이 지났거나, 오늘 이전 날짜로 변경하면 다음 달부터 적용됩니다.</li>
+                    	<li>결제일이 주말 및 공휴일인 경우 다음 평일에 결제됩니다.</li>
+                    	<li class="subdot-list">: (예시) 카드 1차 결제일인 9일이 토요일이면 다음 평일인 월요일(11일)에 결제되며, 2차 결제일은 15일이 됨</li>
+                    	<li>같은 달에 결제일을 여러 번 변경하는 경우 실제 적용되는 달이 안내와 다를 수 있습니다.</li>
+                    	<li>결제일에 계좌 잔고가 부족하면 일부만 결제하고 나머지는 추가 결제일에 다시 결제합니다.</li>
+                    	<li>결제일을 변경하려면, SMS 2차 인증이 필요합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}"
+ 		xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<script th:inline="javascript">
+	
+		$(document).ready(function(){
+			
+			//상담사 불가 시간안내
+			call.traceJourney('DAGTIMEEND').then(() => {
+				all.voiceStop(false, "da_use_time");	
+				
+			});
+
+			polling.shortReq(); //start short polling	
+		});
+		
+		const localCallEnd = () => {
+			call.traceJourneyWithIvr('DARSTIMEUT').then(() => {
+				$.post(contextPath+"/api/wms/external/callEnd", function(data){
+					if(data){
+						location.replace(contextPath+"/auth/sessionEnd");
+					}
+				});
+			});
+		};
+
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+<body>
+	<div class="ivr">
+        <!-- header -->
+        <header class="header_wrapper">
+            <div class="header">
+                <span class="header_logo ci_img" th:classappend="${isDirect} == true ? 'ci_direct'"><span class="label">WillandVision</span></span>
+            </div>
+        </header>
+        <!-- //header -->
+		<!-- Contents -->
+		<div class="container_wrapper">
+			<div class="container">
+				<div class="contents">
+                    <section class="contentTitle">
+                        <span class="title">상담 이용시간</span>
+                    </section>
+					<div class="displayMiddle_title">
+						<section class="row">
+							<div class="imgBox">
+								<p class="imageIcon">
+									<span class="icon timeguide"></span>
+								</p>
+							</div>
+							<div class="small">
+								<h2>
+									<span class="custom_text">
+										상담 이용시간이 아닙니다.<br />
+										상담이 가능한 시간은<br />
+										오전9시부터 오후6시까지 입니다.
+									</span>
+								</h2>
+							</div>
+                            <ul class="button_group full mT1_5em">
+                                <li>
+                                    <button type="button" class="button " th:classappend="${isDirect} == false ? 'submit'" onclick="localCallEnd()">종료</button>
+                                </li>
+                            </ul>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //Contents -->
+	</div>
+</body>
+</th:block>
+</html>

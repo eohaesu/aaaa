@@ -1,0 +1,30 @@
+nav.welcome=welcome
+nav.main=Main
+nav.back=Back
+error=Error
+error.page.page.not.found=Page Not Found
+error.page.page.not.found.msg1=Incorrectly or the address of the page you wish to visit the page, <br/> change the address of the page you have requested has been deleted or could not be found.
+error.page.page.not.found.msg2=url you entered is correct, please check once again.
+error.page.duplicate.not.allow=Plaease retry call if you close first browser tab.
+error.page.access.denied=Request page access denied.
+error.page.server.error=Server Error
+error.page.server.error.msg1=This error, please contact the <b> administrator </ b> in the event of sustained
+error.page.server.error.msg2=Failed to connect to the DB. Please contact the administrator.
+error.ajax.access.denied=Your request has been denied.
+error.ajax.server.error=Server error. please contact the <b> administrator </ b> in the event of sustained.
+error.page.callend=Call End.
+error.wms.uri.expiration=URL has been expiration. Please call again.
+error.page.undermaintenance=This Service is under maintenance. Please try it later.
+
+#counsler
+counsler.page.connect.delay=Your agent connection is <span style="color:red">delayed</span>.
+counsler.page.connect.smooth=Your agent connection is <span style="color:green">smooth</span>.
+counsler.page.connect.msg1=<b>To the agent connection.</b>
+counsler.page.connect.msg2=<b>Waiting customers.</b>
+counsler.page.connect.msg3=<b>Expected.</b>
+counsler.page.connect.count=<b>Number of people</b>
+counsler.page.connect.time=<b>Minute</b>
+counsler.page.connect.consultant=<b>We will connect you to a consultant.</b>
+counsler.page.connect.msg4=Guaranteed service quality for service delivery<br/>Additional content and benefits<br/>Guarantee privacy<br/> is there.
+counsler.page.connect.chat.consultation=Chat Consultation.
+counsler.page.connect.consulting.continue=Continue to connect with an agent

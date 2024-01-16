@@ -1,0 +1,91 @@
+
+/* main */
+.wrap { width: 100%; height: 100vh; margin: 0 auto; background: #f1f1f1;}
+.logo { display: block; font-size: 2rem; color: #333; font-weight: 700; text-transform: uppercase; }
+.mBtn a { display: block; text-indent: -9999px; width: 16px; height: 16px; background: url('../images/menu.png') no-repeat; background-size:100%; margin: 0 auto 0.1em; }
+.mBtn span { display: block; width: 100%; height: 20px; font-size: 0.69em; font-weight: bold;}
+.mNav { z-index: 2; position: fixed; background-color: #e5e5e5; top: 0; right: -100%; width: 100%; height: 100%; transition: all 0.3s ease; overflow: auto;}
+.mNav.on { right: 0; }
+
+.bg-shadow { position: fixed; top: 0; right: 0; width: 100%; height: 100%; z-index: 1; background: rgba(0, 0, 0, 0.7); display: none; cursor: pointer; }
+
+.mainmenu { position: relative; height: 100%; background:#f9f9f9; margin-top:0.4em;}
+.mNavsub_title {background:#fff; width:100%; height: 2.813em;}
+.closeBtn { position: absolute; top: 0.825em; right: 1em; display: block; }
+.closeBtn a { display: block; text-indent: -9999px; width: 20px; height: 20px; background: url('../images/close.png') no-repeat; background-size:100%; margin: 0 auto 0.2em; }
+.backBtn { position: absolute; top: 0.825em; left: 1em; display: block; }
+.backBtn a { display: block; text-indent: -9999px; width: 20px; height: 20px; background: url('../images/back.png') no-repeat; background-size:100%; margin: 0 auto 0.2em; }
+.mainmenu li { 
+	background:#f9f9f9; 
+}
+.mainmenu li a {
+	padding: 0.863em 1em 0.863em 1.5em; 
+	line-height: 1.15em;
+	display: flex;
+	justify-content:space-between;
+
+}
+.mainmenu li a p {
+	width:calc(100% - 1.5em);
+	font-size: 0.87em;
+	font-weight: bold;
+	color: #222222;
+	display: inline-block;
+}
+	.mainmenu li a::after { 
+		background-size:17px; 
+		background-position: top right; 
+		content: '';
+		display:inline-block;
+		width:16px;
+		height: 16px;
+	}
+	.mainmenu li a.open::after {
+		background-image:url('../images/menu_open.png'); 
+	}
+	.mainmenu li a.close::after {
+		background-image:url('../images/menu_close.png'); 
+	}
+
+.sub {
+	font-size: inherit;
+	font-weight: normal;
+	color: #222222;
+	background-color: #fff;
+	padding: 0.5em 2em;
+}
+.sub li {
+	font-size: 0.87em;
+	font-weight: normal;
+	color: #222222;
+	padding: 0.2em 0;
+	background-color: #fff;
+}
+
+
+
+
+.mNav_title {
+	display: flex;
+	align-items:center;
+	margin:0;
+	padding: 0 1.5em 0.625em 1.5em;
+	background:#fff;
+}
+.mNav_title::before{
+	content: "";
+	display: inline-block;
+	width: 1.437em;
+	height: 1.437em;
+	background-repeat: no-repeat;
+	background-size: 100%;
+	background-position: 50% 50%;
+	text-align: center;
+	margin: 0 0.5em 0 0;
+	background-image: url(../images/time.png);
+}
+.mNav_title span{
+	color: #8D744A;
+	vertical-align: middle;
+	margin: 0 0 0 0.5em;
+}

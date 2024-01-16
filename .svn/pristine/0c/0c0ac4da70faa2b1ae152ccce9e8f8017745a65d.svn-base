@@ -1,0 +1,73 @@
+# Deotis DigitalArs
+
+## Reference Documentation
+framework:
+* Spring Boot 2.7.4
+* DevTools (aggregates spring-boot-starter-devtools)
+* lombok
+* Apache Mybatis (aggregates spring-boot-starter)
+
+###security: 
+* Spring Security5 (aggregates spring-boot-starter-security)
+* XSS defender (nhn lucy 2.0.1)
+* CSRF defender (spring security5)
+
+###logger:
+* logback(aggregates spring-boot-starter-logback)
+* log4Jdbc(driverSpy)
+
+###front:
+* Thymeleaf(Thymeleaf Layout dialect)
+* JQuery 3.6.0
+* bootstrap 5
+
+###build:
+* Apache Maven 4.0.0
+* packing .war( .jar 및 내장 톰캣 사용시 scope 변경)
+
+###profiles: 
+* local, dev, stg, prd
+
+###environment:
+* application.yml, wisevoiceweb.properties, logback-spring.xml
+
+###multiple language:
+* messages_kor_properties,  messages_eng_properties
+
+###properties encrypt:
+* jasypt encrypt
+
+### Guides
+파일 경로 및 네이밍 규칙:
+* controller, service, mapper.java, mapper.xml 은 서비스대구분+메뉴그룹+파일구분명 규칙으로 생성 
+* html은 content하위에 메뉴그룹 폴더를 생성 후 가독성있는 메뉴기능명으로 html파일 생성
+
+###request 정책:
+* controller 상단에 메뉴그룹명 mapping
+* 파라미터가 없거나 보안등급이 낮은 비지니스일 경우 get mapping 그 외 post mapping
+* request uri entry point = list(목록), detail(조회), update(수정), create(신규), delete(삭제)
+(ex: /security/list, /security/detail)
+* ajax 요청은 rest를 제외하고 /business menu/ajax/entry point 양식으로 mapping
+
+###dependency injection:
+* 가급적 생성자 주입 또는 lombok ArgContructor 사용
+
+###session/authorization:
+*SessionHander의 userEntity, secretEntity에 security 인증정보가 담겨진다.
+
+###주석 및 로그:
+* 최소 controller method에는 기능 주석 필수
+
+###AOP:
+* DataSource 동적 변경 @DataSourceRetention(DataSourceEnum.secondary)
+
+###API:
+* block : DeotisTemplate(aggregates RestTemplate)
+* non-block : DeotisReactiveClient(aggregates WebClient of Webflux)
+
+###WMS Authorization:
+* communication : deotisTemplate를 사용해 block 방식으로 rest통신
+* process : 
+1. CRID로부터 SID 생성 (AuthenticationKeyFilter) 
+2. AliveCheck 및 WasStart (AuthenticationKeyManager) 
+3. UserEntity생성 및 로그인(AuthenticationKeySuccessHandler)

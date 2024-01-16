@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="scriptFragment">
+	<!-- Constants scripts -->
+	<script th:inline="javascript">
+		const contextPath = $('#contextPathHolder').attr('data-contextPath')||'';
+		const token = $("meta[name='_csrf']").attr("content");
+	    const header = $("meta[name='_csrf_header']").attr("content");
+		let screenTimerStart = null;
+		let screenTimeoutCnt = 0;	// 화면 타임아웃 횟수 (1회 초과 시 콜봇으로 전환)
+		
+		//ajax send csrf base set
+		$(document).ajaxSend(function(e, xhr, options){
+			xhr.setRequestHeader(header,token);
+		});
+		
+		//ajax fobidden default error
+		$(document).ajaxError(function(e, jqXHR, ajaxSetting, thrownError) {
+			switch(jqXHR.status){
+			case 403:
+				if(jqXHR.getResponseHeader("poll_denied") === "Y"){
+					location.replace(contextPath+"/common/endPage");
+				}else{
+					$.get(contextPath+"/auth/chksid", function(result){
+						if(!result){
+							location.replace(contextPath+"/common/endPage");
+						}else{
+							location.replace(contextPath+"/common/accessDenied");
+						}
+					});
+				}
+				break;
+			case 500:	
+				alert("처리 중 오류가 발생했습니다.");
+				location.replace(contextPath+"/auth/serverError");
+				break;
+			}
+		});
+		
+		// 5분 미입력 타임아웃 시 콜봇으로 전환
+		const timeoutFunc = ()=>{
+			if(screenTimeoutCnt >= 1) {		
+				// 2회 타임아웃으로 콜봇으로 전환
+				$.post(contextPath+"/api/wms/external/goToEnd", {message : "NO_INPUT"}, function(result){
+					location.replace(contextPath+"/common/svcEnd");
+				});
+			} else {
+				screenTimeoutCnt++;
+				$('#timoutPopup').removeClass('hidden');	// 타임아웃 안내 팝업
+				
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			}
+			
+		}
+		
+		// 5분 미입력 타이머
+		const screenTimer = ()=>{
+			console.log("screenTimer start!");
+			screenTimerStart = setTimeout(timeoutFunc, 300000);
+		}
+		
+		// toc event callback 
+		const ctrlback = (data) => {
+			location.replace(contextPath+"/main");
+		}
+		
+		$(document).ready(function(){
+			screenTimeoutCnt = 0;	// 화면 로딩 후 미입력 타임아웃 초기화
+			
+			/* 클릭 또는 입력이벤트 발생시 화면 타임아웃 초기화 후 start */
+			$('input').click(function(){
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			});
+			
+			$('input').keyup(function(){
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			});
+			
+			$('select').change(function(){
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			});
+			
+			$('button').click(function(){
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			});
+			
+			$('.d-accoBtn').click(function(){
+				clearTimeout(screenTimerStart);
+				screenTimer();
+			});
+			
+			// 이전 버튼 클릭 이벤트
+			$('#backBtn').click(function() {
+				window.history.back();
+			});
+
+			/*accordion*/
+			$(".d-accoBtn").click(function() {
+				if($(this).parents('.d-accoBox').hasClass('acco-active')) {
+					$(this).parents('.d-accoBox').removeClass('acco-active');
+				} else {
+					if($('.d-accoBox').hasClass('acco-active')) {	// 다른 아코디언 박스가 active인 것이 있는지 확인
+						$('.d-accoBox').removeClass('acco-active');
+						$(this).parents('.d-accoBox').addClass('acco-active');
+					} else {
+						$(this).parents('.d-accoBox').addClass('acco-active');
+					}
+				}
+			});
+			
+			/*툴팁*/
+	        $('.d-tooltip').click(function(){
+	        	if($(this).hasClass('openBlack')) {
+	        		$(this).removeClass('openBlack');
+	        	} else {
+	        		$(this).addClass('openBlack');
+	        	}
+	        });
+		});
+	</script>
+	<!-- common scripts -->
+	<script th:src="@{/static/js/common/polling.js}"></script>
+	<script th:src="@{/static/js/common/common.js}"></script>
+	<script th:src="@{/static/js/common/call.js}"></script>
+	<script th:src="@{/static/js/messages/message.js}"></script>
+	<script th:src="@{/static/js/libs/jquery-ui.min.js}"></script>
+</th:block>
+</html>

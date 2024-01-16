@@ -1,0 +1,9 @@
+${AnsiColor.BRIGHT_MAGENTA}  ____                     ____                   _____       _         _          _         ____       ____     
+${AnsiColor.BRIGHT_YELLOW} |  _"\        ___      U /"___|u      ___       |_ " _|  U  /"\  u    |"|     U  /"\  u  U |  _"\ u   / __"| u  
+${AnsiColor.BRIGHT_GREEN}/| | | |      |_"_|     \| |  _ /     |_"_|        | |     \/ _ \/   U | | u    \/ _ \/    \| |_) |/  <\___ \/   
+${AnsiColor.BRIGHT_RED}U| |_| |\      | |       | |_| |       | |        /| |\    / ___ \    \| |/__   / ___ \     |  _ <     u___) |   
+${AnsiColor.BRIGHT_BLUE} |____/ u    U/| |\u      \____|     U/| |\u     u |_|U   /_/   \_\    |_____| /_/   \_\    |_| \_\    |____/>>  
+${AnsiColor.BRIGHT_GREEN}  |||_    .-,_|___|_,-.   _)(|_   .-,_|___|_,-.  _// \\_   \\    >>    //  \\   \\    >>    //   \\_    )(  (__) 
+${AnsiColor.MAGENTA} (__)_)    \_)-' '-(_/   (__)__)   \_)-' '-(_/  (__) (__) (__)  (__)  (_")("_) (__)  (__)  (__)  (__)  (__)      
+${application.title} ${application.version}
+${AnsiColor.BRIGHT_YELLOW}Powered by Deotis (Based Spring Boot ${spring-boot.version})

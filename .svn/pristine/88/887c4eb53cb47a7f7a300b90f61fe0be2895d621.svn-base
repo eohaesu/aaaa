@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	
+	const btoken = /*[[${btoken}]]*/ "";
+	sessionStorage.setItem("btoken", btoken);
+	
+    $(document).ready(function(){
+   		 
+    	polling.shortReq(1500, ctrlback);
+   	
+		const prodNo = /*[[${prodNo}]]*/ "";
+   	 	const prodNm = /*[[${prodNm}]]*/ "";
+   	 	const svcCd = /*[[${svcCd}]]*/ "";
+   		
+   	 	if(common.svcType[svcCd] != undefined) {
+   	 		$('#svcNm').text(common.svcType[svcCd]);
+   	 	} else {
+   	 		$('#svcNm').text("기타");
+   	 	}
+   	 	
+   	 	$('#cntcInfo').text(prodNo + " " + prodNm);
+   	 	
+   		// 확인 버튼 클릭이벤트
+        $('#okBtn').click(function(){
+        	location.href=contextPath + "/payment/p0002";
+        });
+        
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">납부요금 조회</h1>
+        <button class="c-btn end-open" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <section class="content">
+        <div class="section">
+            <div class="service-section">
+                <div class="text-box">
+                    <span class="s-category" id="svcNm"></span>
+                    <p class="s-tit" id="cntcInfo"></p>
+                </div>
+            </div>
+            
+            <div class="card-section">
+                <div class="card center">
+                    <p class="payMonth"><span class="bold" th:text="${demandMonth}"></span>월 납부 요금</p>
+                    <h3 class="payment"><span class="bold" th:text="${paidAmt}"></span>원</h3>
+                    <p class="non-pay">(미납요금 <span class="non-payment" th:text="${arrearAmt}"></span>원 포함)</p>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="standard" id="okBtn">다음</button>
+            </div>
+        </div>
+    </section>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

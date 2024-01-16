@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- Footer -->
+<th:block th:fragment="footerFragment">
+	<script th:inline="javascript">
+	
+		$(document).ready(function(){
+			
+		});
+		
+		
+		
+	</script>
+	<!-- footer -->
+    <footer id="footContainer" class="footer_wrapper">
+    </footer>
+    <!-- //footer -->
+</th:block>
+
+</html>

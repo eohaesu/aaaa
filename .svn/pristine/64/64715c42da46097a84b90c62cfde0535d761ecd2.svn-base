@@ -1,0 +1,213 @@
+/**
+ *	 global polling
+*/
+const polling = {
+
+	pollIntervalId : null,
+	pollingType : null,
+	pollingToken : sessionStorage.getItem("btoken"),
+	
+	/**
+	 *	async short polling
+	 */
+	shortReq : (interT, ctrlback) => {
+			if(!interT) interT = 1500;
+			polling.pollingType = "short";
+			$.get(contextPath+"/poll/chktoken", {btoken : polling.pollingToken}, (result) => {
+				if(result){
+					polling.pollIntervalId = setInterval(() => {
+						$.get(contextPath+"/poll/short", (data) => {
+							if(data.isCallEnd){
+								location.replace(contextPath+"/auth/sessionEnd");
+							}
+							
+							if(data.control){
+								
+				            	polling.clearEvent().then((result)=>{
+				
+									if(result){
+						            	if(ctrlback && typeof ctrlback === "function"){
+											ctrlback(data.control);
+										}
+									}
+								});
+		
+							}
+							if(data.waitcount){
+				            	polling.clearEvent().then((result)=>{
+				
+									if(result){
+						            	if(ctrlback && typeof ctrlback === "function"){
+											ctrlback(data);
+										}
+									}
+								});
+							}
+						}).fail(()=>{
+							polling.stop();
+						});
+					}, interT);
+				}else{
+					if(window.location.href.indexOf("/common/duplicateNotAllow") < 0){
+						location.replace(contextPath+"/common/duplicateNotAllow");
+					}
+				}
+			});
+			
+			
+	},
+
+	/**
+	 *	async server sent event long polling
+	 */
+	longSSE : (ctrlback) => {
+		polling.pollingType = "sse";
+		//withCredentials : dinied cors diffrent
+		polling.pollIntervalId = new EventSource(contextPath+"/poll/emitter?btoken="+polling.pollingToken, { withCredentials: true }); 
+		
+		//인증상태아님
+		polling.pollIntervalId.addEventListener("AUTHENTICATION_FAIL", async() => {
+			await polling.pollIntervalId.close();
+			location.replace(contextPath+"/common/endPage");
+		});
+		
+		//토큰 인증 실패
+		polling.pollIntervalId.addEventListener("AUTHORIZATION_TOKEN", async() => {
+			await polling.pollIntervalId.close();
+			location.replace(contextPath+"/common/duplicateNotAllow");
+		});
+		
+		//IVR CONTROL 명령
+		polling.pollIntervalId.addEventListener("IMP_EVENT_CONTROL", event => {
+			//event.currentTarget.readyState = 1: 실행 상태 2: 정지상태
+
+            if(event.data){
+	 			const data = JSON.parse(event.data);
+            	
+            	let clean = polling.clearEvent();
+            	
+            	clean.then((result)=>{
+
+					if(result){
+		            	if(ctrlback && typeof ctrlback === "function"){
+							ctrlback(data);
+						}
+					}
+				});
+
+			}
+        });
+        
+        //CTI WAIT COUNT/TIME 명령
+		polling.pollIntervalId.addEventListener("IMP_EVENT_WAITTIME", event => {
+
+            if(event.data){
+
+            	let clean = polling.clearEvent();
+            	
+            	clean.then((result)=>{
+
+					if(result){
+		            	if(ctrlback && typeof ctrlback === "function"){
+							ctrlback(event.data);
+						}
+					}
+				});
+
+			}
+        });
+        
+        //CALL END
+		polling.pollIntervalId.addEventListener("IMP_EVENT_CALLEND", () => {
+            polling.pollIntervalId.close();
+            location.replace(contextPath+"/auth/sessionEnd");
+        });        
+		
+		//NORMAL MESSAGE
+		polling.pollIntervalId.addEventListener("message", (event) => {
+			//console.log(event.currentTarget.readyState);
+            console.log(event.data);
+        });
+        
+        //ON ERROR
+        polling.pollIntervalId.addEventListener("error", (event) => {
+	 		console.log(event);
+		//thread excuter 종료 시에도 자동 재시작
+        });
+
+	},
+	
+	/**
+	 *	async deffredResult long polling (test)
+	 */
+	longDeferred : () => {
+		$.get(contextPath+"/poll/getDeferredResult", (data) => {
+			console.log(data);
+		});
+	},
+	
+	/**
+	 *	session clear event
+	 */
+	clearEvent : () => {
+		return new Promise((resolve, reject) => {
+			$.post(contextPath + "/poll/clearEvent", { btoken: polling.pollingToken }, (result) => {
+				result ? resolve(result) : reject(result);
+			});
+		});
+	},
+	
+	/**
+	 *	 polling stop
+	 */
+	stop : () => {
+		//shortPolling
+		if(polling.pollingType === "short" && polling.pollIntervalId != null){
+			clearInterval(polling.pollIntervalId);
+		}
+		//longPolling(Server Sent Event)
+		if(polling.pollingType === "sse" && polling.pollIntervalId != null){
+			polling.pollIntervalId.close();
+		}
+	},
+	
+	/**
+	 *	 polling Notification broadCast
+	 */
+	broadCastNotification : (data) => {
+		(async () => {
+
+            const showNotification = () => {
+                
+                const notification = new Notification(data.title, {
+                    body: data.content
+                });
+                
+                setTimeout(() => {
+                    notification.close();
+                }, 10 * 1000);
+                
+                notification.addEventListener('click', () => {
+                    window.open(data.url, '_blank');
+                });
+            }
+
+            // 브라우저 알림 허용 권한
+            let granted = false;
+
+            if (Notification.permission === 'granted') {
+                granted = true;
+            } else if (Notification.permission !== 'denied') {
+                let permission = await Notification.requestPermission();
+                granted = permission === 'granted';
+            }
+
+            if (granted) {
+                showNotification();
+            }else{
+				alert("알림 권한을 해제해 주세요.");
+			}
+        })();
+			
+	}
+};

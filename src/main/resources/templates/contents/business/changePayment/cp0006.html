@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+
+		polling.shortReq(1500, ctrlback);
+		
+		common.blockHistoryBack();  // 이전화면으로 이동 막기
+		
+		$.post(contextPath+"/api/wms/external/goToEnd", {message : "INPUT_FAIL"}, function(result){
+			if(result) {
+				setTimeout(() => {
+					location.replace(contextPath+"/common/svcEnd");
+				}, 5000);
+			}
+		});
+		
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper endPage no-header">
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="caution-section caution">
+            <strong class="tit">
+                납부방법 변경이 처리되지 않았습니다.
+            </strong>
+            <p class="txt" id="endSvc">
+            	눈으로 보는 콜봇 서비스를 종료하고<br>
+            	기존 콜봇 서비스로 돌아갑니다.
+            </p>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

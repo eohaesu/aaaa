@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<th:block layout:fragment="content">
+<div class="page-wrapper cautionPage no-header">
+    <!-- 콘텐츠 영역 -->
+    <section class="content">
+        <div class="section caution-section caution">
+            <strong class="tit">중복된 브라우저 탭이 감지되었습니다.<br/>현재 탭을 닫으시고 원본 탭을 사용해 주세요.</strong>
+            <p class="txt">
+                [(#{error.page.duplicate.not.allow})]
+            </p>
+        </div>
+    </section>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>
+
+

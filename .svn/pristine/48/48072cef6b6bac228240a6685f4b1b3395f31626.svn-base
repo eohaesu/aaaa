@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+
+<head>
+	<script th:inline="javascript">
+		$(document).ready(function () {
+			screenTimer();	// 화면 타임아웃 5분
+			polling.shortReq(1500, ctrlback);
+		});
+	</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">홈서비스 설치 변경 신청내역 조회 및 변경</h1>
+        <button class="c-btn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <div class="content-section">
+            <h2 class="section-tit"><span>설치장소 변경 신청내역</span></h2>
+            <ul class="list text-list">
+                <li class="list-tit">현재 설치장소 변경내역을 조회 및 수정할 수 있습니다.</li>
+                <li>설치 희망일 변경은 지역 서비스센터와 직접 전화로 일정변경을 하셔야 합니다.</li>
+            </ul>
+        </div>
+
+        <div class="content-section">
+            <div class="card pd0">
+                <div class="card-info bg-gray">
+                    <div class="content-row">
+                        <div class="info-btn fz16"><a href="#" class="bold btn-arrow" role="button">인터넷/TV</a></div>
+                        <p class="small no_mt">요청(미완료)</p>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="content-row">
+                        <p class="tit">설치 구분</p>
+                        <p class="bold">설변(댁내/구내)</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">이전할 주소</p>
+                        <p class="bold">경기도 광명시 오리로***</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">설치 희망일</p>
+                        <p class="bold">2023-12-05</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">설치 예정일시</p>
+                        <p class="bold">-</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">담당센터</p>
+                        <p class="bold">구로_개통AS센터_이앤디</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card pd0">
+                <div class="card-info bg-gray">
+                    <div class="content-row">
+                        <div class="info-btn fz16"><a href="#" class="bold btn-arrow" role="button">인터넷/TV</a></div>
+                        <p class="small no_mt">완료</p>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="content-row">
+                        <p class="tit">설치 구분</p>
+                        <p class="bold">설변(댁외/구외)</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">이전할 주소</p>
+                        <p class="bold">서울시 송파구 가락동***</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">설치 희망일</p>
+                        <p class="bold">2023-11-30</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">설치 예정일시</p>
+                        <p class="bold">-</p>
+                    </div>
+                    <div class="content-row">
+                        <p class="tit">담당센터</p>
+                        <p class="bold">송파_개통AS센터_온파워</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="accordion-group">
+            <div class="accordion-box notice">
+                <div class="accordion-header">
+                    <div class="text">
+                        <p>꼭 확인하세요.</p>
+                    </div>
+                    <button title="꼭 확인하세요 내용보기" type="button" class="accordion-btn">
+                        <i class="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="accordion-body">
+                    <ul class="list dot-list">
+                        <li>홈매니저 방문 전 알림톡을 보내드립니다. 요청하신 날짜에 홈매니저 방문이 어려운 경우, 일정 조율을 위해 서비스센터 상담사가 고객님께 전화를 드릴 예정입니다.</li>
+                        <li>서비스와 관련된 모뎀, 와이파이 공유기, 셋톱박스(인터넷-TV연결기기)등 이전 설치할 상품 구성 기기를 빠짐없이 모두 챙겨 주시기 바랍니다.</li>
+                        <li>기기가 있어야 설치가 가능합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+
+</html>

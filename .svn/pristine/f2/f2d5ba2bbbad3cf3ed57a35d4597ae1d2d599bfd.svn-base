@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:src="@{/static/js/common/validate.js}"></script>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+		
+		let totalAmt = /*[[${paidAmt}]]*/ "";
+		totalAmt = totalAmt.replace(/,/g, "");
+		
+		$('#allpay').prop('checked', true);
+		$('#inputMoney').attr('disabled', true);
+		let payType = $('input:radio[name=payment]:checked').val();
+		
+		if(payType == "partialpay")	{	// 부분납부인 경우
+			$('#nextBtn').attr('disabled', true);
+		}
+		
+		// '전체납부' 또는 '일부납부' 방법 선택 이벤트
+		$('input:radio[name=payment]').change(function(){
+			payType = $('input:radio[name=payment]:checked').val();
+			if(payType == "allpay") {
+				$('#inputMoney').val("");
+				$('#inputMoney').attr('disabled', true);
+				$('#inputMoney').removeClass('error');
+				$('.error-txt').addClass('hidden');
+				$('#nextBtn').removeAttr('disabled');
+			} else {
+				$('#inputMoney').removeAttr('disabled');
+				$('#nextBtn').attr('disabled', true);
+			}
+		});
+		
+		// '일부납부' 입력이벤트
+		$('#inputMoney').keyup(function(){
+			validate.moneyFormatCheck(this); // 천단위 , 표시
+			
+			if($(this).val().replace(',', '') < 1000) { // 최소금액(1,000) 체크
+				$(this).addClass('error');
+				$('.error-txt').removeClass('hidden');
+				$('#nextBtn').attr('disabled', true);
+			} else if($(this).val().replace(',', '') > Number(totalAmt)) { // 최대금액 체크
+				$(this).val(null);
+				$('#nextBtn').attr('disabled', true);
+				$('#infoTxt').text("청구된 요금보다 많습니다.");
+				$('#infoPopup').removeClass('hidden');
+			} else {
+				$(this).removeClass('error');
+				$('.error-txt').addClass('hidden');
+				$('#nextBtn').removeAttr('disabled');
+			}
+		});
+		
+		// 확인 버튼 클릭이벤트
+		$('#nextBtn').click(function(){			
+			// 납부금액 저장
+			const payAmount = $('input:radio[name=payment]:checked').val() == "allpay" ? totalAmt : $('#inputMoney').val().replace(',', '');
+			sessionStorage.setItem("payAmount", payAmount);
+			location.href=contextPath + "/payment/p0002";
+		});
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper bt-accopage">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">요금 바로 납부하기</h1>
+        <button class="c-btn" id="cancelBtn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+	    <div class="content-section">
+	        <h2 class="section-tit"><span>결제 서비스 내역</span></h2>
+            <div class="content-row t-bold">
+                <p>당월 요금</p>
+                <p><span th:text="${curAmt}"></span>원</p>
+            </div>
+            <th:block th:each="svcList : ${cntcSvcList}">
+            <div class="content-row" th:if="${svcList.svcCd} != 'LZP0003001'">
+                <p>- <span th:text="${svcList.svcNm}"></span>(<span th:text="${svcList.encnTlno}"></span>)</p>
+                <p><span th:text="${svcList.currentBill}"></span>원</p>
+            </div>
+            </th:block>
+            <hr>
+            <div class="content-row t-bold">
+                <p>연체 요금</p>
+                <p class="t-special"><span class="bold" th:text="${arrearAmt}"></span>원</p>
+            </div>
+            <hr>
+            <div class="content-row t-bold fz16">
+                <p class="tit">납부할 금액</p>
+                <p class="t-special"><span class="bold" th:text="${paidAmt}"></span>원</p>
+            </div>
+	    </div>
+	    
+	    <div class="content-section">
+	        <h2 class="section-tit"><span>결제 서비스 선택</span></h2>
+            <div class="content-row">
+                <div class="check-box">
+                    <input id="allpay" name="payment" type="radio" value="allpay" checked>
+                    <label for="allpay" class="t-checkbox">
+                        <i class="icon"></i>
+                        <span class="text">전체 요금 납부</span>
+                        <span class="text t-special bold flex-end"><span class="bold" th:text="${paidAmt}">1351354</span>원</span>
+                    </label>
+                </div>
+            </div>
+            <div class="content-row pd0">
+            	<ul class="input-flex">
+                	<li>
+                		<div class="check-box">
+		                    <input id="partialpay" name="payment" type="radio" value="partialpay">
+		                    <label for="partialpay" class="t-checkbox">
+		                        <i class="icon"></i>
+		                        <span class="text">요금 부분 납부</span>
+		                    </label>
+		                </div>
+                	</li>
+                	<li class="input-flex">
+               			<div class="custom-info">
+               				<input class="inputPay" id="inputMoney" type="tel" placeholder="납부금액입력" autocomplete="off">
+	                        <span>원</span>
+               			</div>
+                	</li>
+                </ul>
+            </div>
+            <p class="error-txt hidden">납부하실 금액은 최소 1,000원 이상이어야 합니다. 금액을 확인해 주시기 바랍니다.</p>
+	    </div>
+	    
+	    <div class="btn-group">
+	        <!-- <button class="g-line" id="backBtn">이전</button> -->
+	        <button class="standard" id="nextBtn">다음</button>
+	    </div>
+        
+        <div class="accordion-group">
+	        <div class="accordion-box notice d-accoBox">
+	            <div class="accordion-header d-accoBtn">
+	                <div class="text">
+	                    <p>요금 납부 시 중복 결제 주의안내</p>
+	                </div>
+	                <button title="고객정보 수집 및 이용동의 약관내용보기" type="button" class="accordion-btn">
+	                    <i class="toggleIcon"></i>
+	                </button>
+	            </div>
+	            <div class="accordion-body">
+	                <ul class="list dot-list">
+	                    <li>은행이나 카드 <span class="t-special">자동이체 결제 기간 중 신용카드/입금 전용계좌 납부를 하시면 두 번 결제될 수 있으니,</span> 납부 전에 거래내역을 꼭 확인해 주시기 바랍니다</li>
+	                    <li>중복 결제가 발생할 경우, 납부 방법 및 금액에 따라 자동으로 환불되거나 다음 달 요금에서 미리 결제됩니다</li>
+	                    <li>요금이 두 번 납부가 될 경우 아래와 같이 환불처리 됩니다.</li>
+	                    <li class="subdot-list">- 카드자동이체 – 카드즉납 → 카드자동이체 납부취소(단, 동일금액 두 번 납부 시)</li>
+	                    <li class="subdot-list">- 카드자동이체 – 카드즉납 납부취소</li>
+	                    <li>법인명의의 사업자카드는 결제가 불가능합니다.</li>
+	                </ul>
+	            </div>
+	        </div>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/default}">
+<head>
+<script th:src="@{/static/js/libs/swiper.min.js}"></script>
+<link th:href="@{/static/css/libs/swiper.css}" rel="stylesheet" type="text/css" />
+
+<script th:inline="javascript">
+
+	const siteInfo = /*[[${siteInfo}]]*/"";
+
+ 	$(window).on('hashchange', function(e) {
+ 		hashHandler();
+ 	});
+ 	
+	$(document).ready(function(){
+		
+		const wcSeq = /*[[${wcSeq}]]*/ "";
+		const c_name = customerNameByteCheck(/*[[${customerName}]]*/ "", 8);
+		
+		$("#customerName").text(c_name);
+
+		polling.shortReq();
+
+
+ 	});	
+
+	const hashHandler = function(){
+		$("#subMenuDialog").hide();
+
+		if(sessionStorage.getItem("counselorInfo")){
+			sessionStorage.removeItem("counselorInfo");
+		}
+		
+		if(document.location.hash === ''){
+			window.history.pushState(null, document.title, location.href);
+			window.onpopstate = () => { history.go(1); };
+
+		}else{
+			window.onpopstate = () => {};
+			let str_hash = document.location.hash;
+			str_hash = str_hash.replace("#","");		
+			const str_hash_arr = common.base64UrlDecode(str_hash).split("|");	
+		}
+	};
+
+
+	const menuHashChange = function(index, menu_seq, mc_flag){
+		window.location.hash = "#"+common.base64UrlEncode(index+"|"+menu_seq+"|"+mc_flag);
+			
+		call.voiceStop(false, etc_str.audioPath);
+		
+	}
+
+	
+	
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+
+	<body>
+		<div class="ivr">
+			<!-- header -->
+			<header class="header_wrapper">
+				<div class="header" style="display: flex;justify-content: center;">
+					<img src="" id="header_logo" />
+				</div>
+			</header>
+			<!-- //header -->
+			<!-- main container -->
+			<div class="container_wrapper" id="mainContainer">
+				<div class="container index">
+					<div class="contents">
+						<section class="info">
+							<div class="infotitle">
+								<ul>
+									<li><span class="custom_text" id="customerName"></span></li>
+									<li><span class="custom_text"></span></li>
+								</ul>
+							</div>
+						</section>
+						<div class="menubg">
+							<section class="mT-6em pB1_25em" id="customArea"></section>
+						</div>
+						<section id="menuArea"></section>
+						<section class="mB0_5em" id="bannerArea"></section>
+						<!-- IVR TEST PAGE LINK -->
+						<th:block th:if="${ivrTest}">
+							<a th:href="@{/test/ivrTestMock}">IVR TEST PAGE</a>
+						</th:block>
+					</div>
+				</div>
+			</div>
+			<!-- main container -->
+			<!-- sub container -->
+			<div class="container_wrapper" id="subContainer"
+				style="display: none;">
+				<div class="container sdefaultMenu">
+					<div class="contents contentline" id="subContainerContent"></div>
+				</div>
+			</div>
+			<!-- sub container -->
+		</div>
+
+		<div id="subMenuDialog" style="display: none;">
+			<!-- Contents -->
+			<div class="noticeModal overlayBlack">
+				<div class="modal">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-body">
+								<div class="guide">
+									<p>
+										<span class="custom_text" id="subMenuClickMsg"></span>
+									</p>
+								</div>
+								<input type="hidden" id="index"> <input type="hidden" id="packageName"> <input type="hidden" id="mc_flag">
+							</div>
+							<ul class="button_group popupbtn">
+								<li>
+									<button type="button" class="button fit" onclick="subMenuDialogCancel()">취소</button>
+								</li>
+								<li>
+									<button type="button" class="button fit submit" onclick="linkMove()">확인</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+			<!-- //Contents -->
+		</div>
+
+	</body>
+</th:block>
+
+</html>

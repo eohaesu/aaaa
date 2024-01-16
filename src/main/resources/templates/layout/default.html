@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+	
+    <!-- head -->
+    <th:block th:replace="/layout/fragments/head :: headFragment"></th:block>
+    <!-- library -->
+    <th:block th:replace="/layout/fragments/library :: libraryFragment"></th:block>
+ 	<!-- common js script -->
+    <th:block th:replace="/layout/fragments/script :: scriptFragment"></th:block>
+    <body id="page-top">
+        <div id="wrapper">
+			<div id="content-container" class="content-container">
+			<!-- top-->
+        	<th:block th:replace="/layout/fragments/top :: topbarFragment"></th:block>
+				<div id="page-content" class="page-content page-manager page-info">
+					<!-- contents -->	
+					<th:block layout:fragment="content"></th:block>
+					
+				</div>
+			</div>
+			
+            <!-- bottom-->
+            <th:block th:replace="/layout/fragments/footer :: footerFragment"></th:block>
+            
+            <!-- loading -->
+            <div id="loading" style="display: none;">
+				<div class="loading"></div>
+				<div class="overlayBlack_bg"></div>
+			</div>
+		</div>
+		
+    </body>
+</html>

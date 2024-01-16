@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}">
+<head>
+<style>
+button {
+	min-width: 120px;
+	height: 35px;
+	font-size: 14px;
+	border-radius: 6px;
+	padding: 0 8px;
+	display: inline-flex;
+	white-space: nowrap;
+	justify-content: center;
+	align-items: center;
+	border: none;
+	background-color: #DCEDC8;
+}
+
+
+textarea {
+  padding: 10px;
+  max-width: 100%;
+  line-height: 1.5;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-shadow: 1px 1px 1px #999;
+  overflow:auto;
+}
+</style>
+<script th:inline="javascript">
+ 	
+	$(document).ready(function(){
+ 		localStorage.clear();
+ 		sessionStorage.clear();
+ 		
+ 		//polling.shortReq(1500, ctrlback);
+ 		
+ 		let data = /*[[${data}]]*/ "";
+ 	});
+ 	
+	const apiTest = function(apiNo) {
+		
+		let url = "";
+		let method = "";
+		
+		if(apiNo == "IF-API-026805") {         // 고객통합정보조회
+			url = "/test/custCntcInfo";
+			method = "GET";
+		} else if(apiNo == "IF-API-028501") {  // 인증번호확인
+			url = "/test/confirmAutnNo";
+			method = "GET";
+		} else if(apiNo == "IF-API-028502") {  // 인증번호요청
+			url = "/test/reqAutnNo";
+			method = "GET";
+		} else if(apiNo == "IF-API-054202") {  // 청구요금조회
+			url = "/test/billChrg";
+			method = "GET";
+		} else if(apiNo == "IF-API-005609") {  // 보이는ARS수납
+			url = "/test/payCardChrg";
+			method = "GET";
+		} else if(apiNo == "IF-API-001112") {  // 은행카드사목록조회
+			url = "/test/getBankList";
+			method = "GET";
+		} else if(apiNo == "IF-API-031707") {  // 납부정보조회
+			url = "/test/getPayMethod";
+			method = "GET";
+		} else if(apiNo == "IF-API-047801") {  // 자동이체 최초출금일 조회
+			url = "/test/getWithdrawDate";
+			method = "GET";
+		}
+		
+		$.ajax({
+			url : $("#contextPathHolder").attr("data-contextPath") + url,
+			type : method,
+			dataType : "json",
+			success : function(data) {
+				
+				console.log(data);
+				
+				document.querySelector("#result").value = JSON.stringify(data);
+				
+			},
+			error : function(jqXHR, textStatus, errorThrown) {
+				console.log(jqXHR);
+				console.log(textStatus);
+				console.log(errorThrown);
+			}
+		})
+	}
+	
+</script>
+</head>
+
+<th:block layout:fragment="content">
+	<body style="text-align:center">
+	
+		<div class="">
+			<h2>API TEST</h2>
+		</div>
+		
+		<table>
+			<tr>
+				<th scope="col"></th>
+				<th scope="col"></th>
+				<th scope="col"></th>
+			</tr>
+			<tr>
+				<td></td>
+			</tr>
+		</table>
+		<div class="" style="margin-top:15px">
+			<p class="" style="display:inline-block">고객정보조회</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-026805')">IF-API-026805</button>
+		</div>
+
+		<div class="">
+			<p class=""  style="display:inline-block">인증번호확인</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-028501')">IF-API-028501</button>
+		</div>
+
+		<div class="">
+			<p class="" style="display:inline-block">인증번호요청</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-028502')">IF-API-028502</button>
+		</div>
+
+		<div class="">
+			<p class="" style="display:inline-block">청구요금조회</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-054202')">IF-API-054202</button>
+		</div>
+
+		<div class="">
+			<p class="" style="display:inline-block">보이는ARS수납</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-005609')">IF-API-005609</button>
+		</div>
+
+		<div class="">
+			<p class="" style="display:inline-block">은행카드사목록조회</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-001112')">IF-API-001112</button>
+		</div>
+		
+		<div class="">
+			<p class="" style="display:inline-block">납부정보조회</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-031707')">IF-API-031707</button>
+		</div>
+		
+		<div class="">
+			<p class="" style="display:inline-block">자동이체 최초출금일 조회</p>
+			<button type="button" class="btn btn-primary btn-sm" onclick="apiTest('IF-API-047801')">IF-API-047801</button>
+		</div>
+		
+		<div>
+			<textarea id="result" rows="30" cols="150"></textarea>
+		</div>
+	</body>
+</th:block>
+</html>

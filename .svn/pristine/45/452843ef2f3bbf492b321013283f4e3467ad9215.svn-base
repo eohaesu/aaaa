@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+	<head>
+		<!-- head -->
+	    <th:block th:replace="/layout/fragments/head :: headFragment"></th:block>
+	    <!-- library -->
+	    <th:block th:replace="/layout/fragments/library :: libraryFragment"></th:block>
+	</head>
+    <body>
+    	<!-- contents -->
+        <th:block layout:fragment="content"></th:block>
+        <!-- loading -->
+        <div id="loading" style="display: none;">
+			<div class="loading"></div>
+			<div class="overlayBlack_bg"></div>
+		</div>
+    </body>
+    
+</html>

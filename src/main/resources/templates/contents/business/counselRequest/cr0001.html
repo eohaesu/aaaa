@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}" lang="ko">
+<head>
+<script th:inline="javascript">
+	$(document).ready(function(){
+		screenTimer();	// 화면 타임아웃 5분
+		polling.shortReq(1500, ctrlback);
+	});
+</script>
+</head>
+<th:block layout:fragment="content">
+<div class="page-wrapper">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <h1 class="page-title">상담 신청</h1>
+        <button class="c-btn">닫기</button>
+    </header>
+    <!-- 헤더 영역 END -->
+    
+    <!-- 콘텐츠 영역 -->
+    <div class="content">
+        <!-- 상담 신청 서비스 -->
+        <div class="content-section">
+            <div class="card bg-gray">
+                <div class="content-row no_pt">
+                    <p class="tit">상담 신청 서비스</p>
+                    <p class="bold">홈상품 설치장소 변경신청</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <!-- 연락 받을 분 -->
+            <div class="inputInfo">
+                <label class="info-label">
+                    연락 받을 분
+                    <span class="required"><i class="hidden">필수항목</i></span>
+                </label>
+                <div class="inputBox">
+                    <div class="custom-info">
+                        <input placeholder="이름 입력" type="text" class="custom-inp">
+                    </div>
+                    <p class="error-txt hidden">연락 받을 분을 입력해 주세요.</p>
+                </div>
+            </div>
+
+            <!-- 연락처 -->
+            <div class="inputInfo">
+                <label class="info-label">
+                    연락처
+                    <span class="required"><i class="hidden">필수항목</i></span>
+                </label>
+
+                <div class="inputBox">
+                    <div class="custom-info">
+                        <input placeholder="휴대폰번호 입력" type="tel" class="custom-inp" value="01012345678">
+                    </div>
+                    <p class="error-txt hidden">연락처를 입력해 주세요.</p>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="btn-group">
+            <button class="standard">신청</button>
+        </div>
+    </div>
+    <!-- 콘텐츠 영역 END -->
+</div>
+</th:block>
+</html>

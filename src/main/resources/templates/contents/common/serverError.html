@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/single}"
+ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+	<script th:inline="javascript">
+
+		common.blockHistoryBack();  // 이전화면으로 이동 막기
+
+		const contextPath = $('#contextPathHolder').attr('data-contextPath');
+		let backToMain = function(){
+			location.replace(contextPath+"/main");
+		}
+		
+	</script>
+</head>
+
+<th:block layout:fragment="content">
+	<div class="ivr">
+		<!-- header -->
+		<header class="header_wrapper hidden">
+			<div class="header">
+				<span class="header_logo ci_img ci_img_combine"><span class="label">U+ 눈으로 보는 콜봇 Wisepotal</span></span>
+			</div>
+		</header>
+		<!-- //header -->
+		<!-- Contents -->
+		<div class="container_wrapper">
+			<div class="container">
+				<div class="contents">
+					<div class="displayMiddle">
+						<section class="row">
+							<div class="imgBox">
+								<p class="imageIcon">
+									<span class="icon info_warning"></span><!-- 오류/주의 info_warning -->
+								</p>
+							</div>
+							<div class="small">
+								<h2>
+									<span class="custom_text">ARS서비스 이용이 일시적으로 어렵습니다.<br />잠시 후 다시 이용 부탁 드립니다.</span>
+								</h2>
+								<ul class="button_group full mT1_5em">
+									<li>
+										<button type="button" class="button" onclick="backToMain()">메인으로</button>
+									</li>
+								</ul>
+							</div>
+							<div style="margin-top: 20px;font-size: 15px;">
+								[(#{error.page.server.error})]
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //Contents -->
+	</div>
+</th:block>
+</html>
+
+

@@ -1,0 +1,37 @@
+######################Default Locale Mode ( kor, eng)
+locale.default=kor
+######################Test mode(do not connect ivr)
+system.test.mode=true
+######################IVR Test page use
+system.test.ivr=true
+######################Long Polling thread timeout 1/1000 sec
+system.polling.thread.timeout=120000
+######################Dynamic logLevel changeKey
+system.log.changekey=rlawhdwlsajtdlTek
+######################External rest api connector timeout
+system.external.connection.timeout=10000
+system.external.read.timeout=5000
+system.external.write.timeout=5000
+######################TruestCert SSL enable (when attempt to external api)
+system.external.trust.ssl=true
+######################schedule cron data
+system.scheduled.crondata=0 0 12 * * *
+######################default digitalars phone number list(when try to expiration access)
+digitalars.default.number=1544-0114,1544-0077
+######################Use default digitalars site_code (site_code or null is recieve from ivr)
+digitalars.default.site=
+######################Incoming duplicate sid key policy( default or '' : pre session out, after : after new session out, both : both kill , allow : all allow)
+authorize.session.mode=default
+######################WMS internal event save on redis type session/repository/hash (default:session, repo, hash)
+wms.internal.event.redis.type=hash
+######################WMS configuration
+wms.external.server.balancer=http://192.168.20.202,7080
+wms.external.server.1=http://192.168.20.202,7080
+wms.external.server.2=http://192.168.20.202,7080
+wms.external.server.3=http://192.168.20.202,7080
+wms.external.server.4=http://192.168.20.202,7080
+wms.external.server.5=http://192.168.20.202,7080
+wms.external.server.6=http://192.168.20.202,7080
+######################INTERNAL API AUTHORIZE
+rest.internal.auth.use=false
+rest.internal.allow.ip=210.333.112.3,192.168.20.229

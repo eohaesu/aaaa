@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/contentful}">
+<head>
+	<script th:inline="javascript">
+
+		const redirectUri = /*[[${redirectUri}]]*/ "";
+		let recieveFlag = false;
+	
+		$(document).ready(function(){
+
+			$("#loading").show();
+			//polling.longSSE(ctrlback);
+			polling.shortReq(1000, ctrlback);
+			setTimeout(()=>{
+				if(!recieveFlag){
+					/* call.traceJourney('DARSPRTOUT').then(() => {
+						call.voiceStop(false, "da_busy_msg");
+					}); */
+					$("#loading").hide();
+					$("#ticon").prop("class", "icon result_fail");
+					$("#messageTxt").html("죄송합니다.<br />응답을 실패하였습니다.");
+					$("#callEndBtn").show();
+					
+				}
+
+			}, 30000);
+		});
+		
+		const ctrlback = (data) =>{
+			
+			recieveFlag = true;
+			
+			$("#loading").hide();
+			
+			redirectUri = redirectUri || "/main";
+
+			location.replace(contextPath+redirectUri);
+
+		};
+		
+		const goToMain = () => {
+			location.replace(contextPath+"/main");
+		};
+		
+		const setCallEnd = ()=>{
+			
+			//call.traceJourneyWithIvr('DARSRTMOUT').then(() => {
+				$.post(contextPath+"/api/wms/external/callEnd", function(data){
+					if(data){
+						location.replace(contextPath+"/auth/sessionEnd");
+					}
+				});
+			//});
+		};
+		
+	</script>
+</head>
+<th:block layout:fragment="content">
+	<div class="ivr">
+		<!-- header -->
+		<header class="header_wrapper hidden">
+			<div class="header">
+				<span class="header_logo ci_img ci_img_combine" th:classappend="${isDirect} == true ? 'ci_direct'"><span class="label">WillandVision</span></span>
+			</div>
+		</header>
+		<!-- //header -->
+		<!-- Contents -->
+		<div class="container_wrapper">
+			<div class="container">
+				<div class="contents">
+					<div class="displayMiddle">
+						<section class="row">
+							<div class="imgBox">
+								<p class="imageIcon">
+									<span id="ticon" class="icon timeguide"></span>
+								</p>
+							</div>
+							<div class="small">
+								<h2>
+									<span id="messageTxt" class="custom_text">잠시 기다려 주시기 바랍니다.</span>
+								</h2>
+							</div>
+							<ul class="button_group full mT1_5em">
+								<li>
+	                                <button type="button" class="button submit"  id="goMainBtn" style="display:none;" onclick="goToMain();">메인</button>
+	                            </li>
+	                            <li>
+	                                <button type="button" class="button submit"  id="callEndBtn" style="display:none;" onclick="setCallEnd();">종료</button>
+	                            </li>
+		                    </ul>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //Contents -->
+	</div>
+</th:block>
+</html>
+
+

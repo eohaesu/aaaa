@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="popupFragment">
+	<script th:inline="javascript">
+		$(document).ready(function(){
+			let reqMyAuthInfoFail = 0;		// 본인인증번호 요청정보 불일치 횟수 (3회 실패시 콜봇으로 전환)
+			let reqMyAuthFail = 0;			// 본인인증번호 요청 실패횟수 (3회 실패시 콜봇으로 전환)
+			let confMyAuthFail = 0;			// 본인인증번호 확인 실패횟수 (3회 실패시 콜봇으로 전환)
+			let authTimerStart = null;		// 본인인증번호 입력 타이머	(제한 3분) 
+			let authReqPossible = true;		// 본인인증번호 요청 가능여부
+			let authReqTimerStart = null;	// 본인인증번호 요청 타이머	(요청 후 1분 후 재요청 가능)
+			
+			// 취소 버튼 클릭이벤트
+	        $('#cancelBtn').click(function(){
+	            $('#endPopup').removeClass('hidden');
+	        });
+			
+	     	// 취소팝업 확인 버튼 클릭이벤트
+	        $('#svcEndOk').click(function(){
+	        	// 콜봇으로 전환
+	        	$.get(contextPath+"/api/wms/external/callEnd", function(result){
+					location.replace(contextPath+"/common/svcEnd");
+	    		});
+	        });
+	     	
+			// 안내팝업 확인 버튼 클릭이벤트 (콜봇으로 돌아감)
+			$('#endInfoOk').click(function(){
+	     		// 콜봇으로 전환
+				$.post(contextPath+"/api/wms/external/goToEnd", {message : "INPUT_FAIL"}, function(result){
+					location.replace(contextPath+"/common/svcEnd");
+				});
+	     	});
+
+			// 팝업 확인 버튼 클릭이벤트
+	     	$('.d-okBtn').click(function(){
+	     		$(this).parents('.d-popup').addClass('hidden');
+	     	});
+			
+	     	// 팝업 x버튼 클릭이벤트
+	        $('.d-close').click(function(){
+	            $('.d-popup').addClass('hidden');
+	        });
+
+	     	// SMS 본인인증 팝업 x버튼 클릭이벤트
+	     	$('.d-smsClose').click(function(){
+	     		// 인증 관련 초기화
+	     		reqMyAuthInfoFail = 0;		// 본인인증번호 요청정보 불일치 횟수 
+				reqMyAuthFail = 0;			// 본인인증번호 요청 실패횟수 
+				confMyAuthFail = 0;			// 본인인증번호 확인 실패횟수 
+				authReqPossible = true;		// 본인인증번호 요청 가능여부
+				clearInterval(authTimerStart);
+				clearInterval(authReqTimerStart);
+				$('#reqSmsAuthBtn').text(txt.sms_auth_send_req);	// '인증번호 발송'
+				$('#reqSmsAuthBtn').attr('disabled', true);			// '인증번호 발송' 버튼 비활성화
+				$('#myAuthNum').val(""); 							// 인증번호 입력칸 초기화
+     			$('#myAuthNum').attr('disabled', true);				// 인증번호 입력칸 비활성화
+				$('#myAuthNum').closest('div').removeClass('error');
+				$('#myAuthNum').closest('div').nextAll().addClass('hidden');
+				$('#myExtendTime').addClass('hidden');				// 시간연장하기 숨김
+				$('#myAuthTimer').addClass('hidden');				// 3분 타이머 비활성화
+				$('#smsAgreeChk').prop('checked', false);			// 약관 체크 해제
+				$('#smsAuthPopup').addClass('hidden');
+	     	});
+	     	
+	     	// 본인인증 인증번호 요청 타이머
+	     	const myAuthReqTimer = ()=>{
+	     		let time=60000;			  // 타임아웃
+				
+	     		authReqTimerStart = setInterval(()=>{
+		     		authReqPossible = false;
+					time = time-1000;
+					
+					if(time == 0) {
+						clearInterval(authReqTimerStart);
+						authReqPossible = true;
+						return true;
+					}
+		     	}, 1000);
+	     	};
+	     	
+			// 본인인증 인증번호 입력 타이머
+			const myAuthInpTimer = ()=>{
+				let time=180000;		  // 타임아웃
+				let min=3;                // 인증번호 타이머 분
+				let sec=60;               // 인증번호 타이머 초
+				
+				authTimerStart = setInterval(()=>{
+					time = time-1000;
+					min = Math.floor(time/60000);
+					sec = Math.floor((time-(min*60000))/1000);
+					
+					if(sec.toString().length == 1) {
+						sec = "0"+sec;
+					} 
+					
+					let str = min + ":" + sec;
+					
+					$('#myRemainTime').text(str);
+					
+					if(time == 0) {
+						clearInterval(authTimerStart);
+						$('#myAuthTimer').addClass('hidden');
+						$('#myAuthNum').closest('div').addClass('error');
+						$('#myAuthNum').closest('div').nextAll().addClass('hidden');	// 전체 에러메시지 초기화
+						$('#myAuthNum').closest('div').nextAll('.time-error').removeClass('hidden');
+						$('#myAuthNum').attr('disabled', true);		// 인증번호 입력칸 비활성화
+						$('#confAuthBtn').attr('disabled', true);	// 인증하기 버튼 비활성화
+						$('#myExtendTime').addClass('hidden');		// 시간연장하기 버튼 숨김
+						return false;
+					}
+				}, 1000);
+			};
+
+			// '시간연장하기' 버튼 클릭이벤트
+			$('#myExtendTime').click(function(){
+				$('#myExtendTime').addClass('hidden');		// 시간연장하기 버튼 숨김
+				clearInterval(authTimerStart);
+				myAuthInpTimer();
+			});
+
+			// 약관동의 체크이벤트
+			$('#smsAgreeChk').click(function() {
+				if($('#smsAgreeChk').is(':checked')) {
+					$('#reqSmsAuthBtn').removeAttr('disabled');		// '인증번호 발송' 버튼 활성화
+				} else {
+					$('#reqSmsAuthBtn').attr('disabled', true);		// '인증번호 발송' 버튼 비활성화
+				}
+			});
+
+			// 개인정보수집 이용안내
+	        $('#myInfoGuide').click(function(){
+	            $('#perInfoGuidePopup').removeClass('hidden');
+	        });
+			
+			// 인증번호 입력값 체크
+			$('#myAuthNum').keyup(function() {
+				if(($(this).val().length == $(this).attr('maxlength'))) {
+					$(this).closest('div').removeClass('error');
+					$(this).closest('div').nextAll().addClass('hidden');	// 전체 에러메시지 초기화
+					$(this).closest('div').next().addClass('hidden');
+					if($('#smsAgreeChk').is(':checked')) {
+						$('#confAuthBtn').removeAttr('disabled');			// '인증하기' 버튼 활성화
+					} else {
+						$('#confAuthBtn').attr('disabled', true);			// '인증하기' 버튼 비활성화
+					}
+				} else {
+					$(this).closest('div').addClass('error');
+					$(this).closest('div').next().removeClass('hidden');
+					$('#confAuthBtn').attr('disabled', true);				// '인증하기' 버튼 비활성화
+				}
+			});
+
+	     	// '인증번호발송' 버튼 클릭이벤트
+	     	$('#reqSmsAuthBtn').click(function() {
+	     		if(authReqPossible) {	// 요청 1분 후에 재요청 가능
+	    			// 인증번호 확인 관련 초기화
+	     			$('#myAuthNum').val(""); 						// 인증번호 입력칸 초기화
+	     			$('#myAuthNum').attr('disabled', true);			// 인증번호 입력칸 비활성화
+					$('#myAuthNum').closest('div').removeClass('error');
+					$('#myAuthNum').closest('div').nextAll().addClass('hidden');
+					$('#myExtendTime').addClass('hidden');			// 시간연장하기 숨김
+					$('#myAuthTimer').addClass('hidden');			// 3분 타이머 비활성화
+					$('#confAuthBtn').attr('disabled', true);		// '인증하기' 버튼 비활성화
+
+		     		$.ajax({
+						url: contextPath+"/common/sendAuthNo",
+						type : "POST",
+						dataType : "text",
+						data : {
+							custNm : $('#myName').val(),
+							rcpNo : $('#myPhoneNum').val().replace(/-/g, ""),
+							ocmpSendYn : "N"
+						},
+						success : function(data) {
+							if(data != null && data == "S") {
+								reqMyAuthFail = 0;			// 요청 실패 횟수
+								reqMyAuthInfoFail = 0;		// 입력정보 불일치 횟수
+								authReqPossible = false;	// 인증번호 재요청 가능여부
+								
+								$('#reqSmsAuthBtn').text(txt.sms_auth_send_again);	// '재요청하기'
+								$('#myAuthNum').removeAttr('disabled');		// 인증번호입력 활성화
+								$('#myExtendTime').removeClass('hidden');	// 시간연장하기 표출
+								$('#myAuthTimer').removeClass('hidden');	// 3분 타이머 활성화
+								clearInterval(authTimerStart);
+								myAuthInpTimer();							// 인증번호 입력 타이머 시작
+								myAuthReqTimer();							// 인증번호 요청 타이머 시작 (1분 후 재요청 가능)
+								
+								$('#infoTxt').html(msg.auth_req_success);
+								$('#infoPopup').removeClass('hidden');
+							} else if(data != null && data == "MISMATCH") {	// 고객정보 불일치
+								reqMyAuthInfoFail++;
+								if(reqMyAuthInfoFail == 3) {
+									$('#infoTxt').html(msg.three_times_mismatch);
+									$('#infoOk').addClass('hidden');
+									$('#endInfoOk').removeClass('hidden');	// 콜봇으로 돌아가는 버튼 표출
+									$('#infoPopup').removeClass('hidden');	// 팝업 표출
+									return false;
+								}else {
+									$('#infoTxt').html(msg.input_info_mismatch);
+									$('#infoPopup').removeClass('hidden');
+								}
+							} else {  											// API 오류 및 그 외
+								location.replace(contextPath+"/common/apiError");
+								return false;
+							}
+						},
+						error : function(jqXHR, textStatus, errorThrown) {
+							location.replace(contextPath+"/common/apiError");
+							return false;
+						}
+					});
+	     		} else {
+	     			$('#infoTxt').text(msg.auth_req_impossible);
+					$('#infoPopup').removeClass('hidden');
+	     		}
+	     	});
+
+			// '인증하기' 버튼 클릭이벤트
+			$('#confAuthBtn').click(function() {
+				$.ajax({
+					url: contextPath+"/common/confirmAuthNo",
+					type : "POST",
+					dataType : "text",
+					data : { authNum : $('#myAuthNum').val() },
+					success : function(data) {
+						if(data == "success") {
+							confMyAuthFail = 0;
+							clearInterval(authTimerStart);
+							$('#myAuthTimer').addClass('hidden');			// 타이머 숨김
+							$('#reqSmsAuthBtn').attr('disabled', true);		// 인증번호 발송 버튼 비활성화
+							$('#myAuthNum').attr('disabled', true);			// 인증번호 입력칸 비활성화
+							$('#myExtendTime').addClass('hidden');			// 시간연장하기 숨김
+							$('#smsAuthSuccess').removeClass('hidden');		// 팝업
+						} else {
+							confMyAuthFail++;
+							if(confMyAuthFail == 3) {
+								$('#infoTxt').html(msg.three_times_confirm_fail);
+								$('#infoOk').addClass('hidden');
+								$('#endInfoOk').removeClass('hidden');		// 콜봇으로 돌아가는 버튼 표출
+								$('#infoPopup').removeClass('hidden');		// 팝업 표출
+								return false;
+							} else {
+								$('#infoTxt').html(msg.auth_confirm_fail);
+								$('#infoPopup').removeClass('hidden');
+							}
+						}
+					},
+					error : function(jqXHR, textStatus, errorThrown) {
+						location.replace(contextPath+"/common/apiError");
+						return false;
+					}
+				});
+			});
+		});
+	</script>
+	
+    <!--모달 팝업 영역-->
+	<div class="modal-wrap">
+		<!--SMS 본인인증 팝업-->
+	    <!-- ajax 통신을 통해 smsAuthPage.html 셋팅함 -->
+	    <div class="popup popup-2 hidden verification" id="smsAuthPopup">
+			<div class="pop-wrap">
+				<div class="pop-content">
+				    <div class="pop-header">
+				        <h1 class="pop-tit">인증하기</h1>
+				        <button class="c-btn d-smsClose">닫기</button>
+				    </div>
+				    <div class="pop-body">
+				    	<div class="content-section">
+				    		<h2 class="section-tit"><span>SMS 인증</span></h2>
+				    		<!-- 이름 -->
+					        <div class="inputInfo">
+					        	<label for="name" class="info-label">
+					                 이름
+					                 <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+					            </label>
+				                <div class="custom-info">
+				                    <input id="myName" name="name" placeholder="이름 입력" type="text" class="custom-inp" onkeyup="validate.inputTextCheck(this)" autocomplete="off" readonly>
+				                </div>
+				                <p class="error-txt hidden">이름을 입력해 주세요.</p>
+					         </div>
+					        
+					         <!-- 본인 휴대폰 번호 -->
+					         <div class="inputInfo">
+					             <label for="phoneNum" class="info-label">
+					                 휴대폰번호
+					                 <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+					             </label>
+				                 <div class="custom-info inBtn">
+				                     <input id="myPhoneNum" name="phoneNum" placeholder="휴대폰번호 입력" maxlength="13" type="tel" class="custom-inp" onkeyup="validate.inputNumCheck(this)" autocomplete="off" readonly>
+				                     <div class="btn-group exTime">
+				                     	<button title="인증번호 발송" class="request-btn" id="reqSmsAuthBtn" disabled><span class="">인증번호 발송</span></button>
+				                 	</div>
+				                 </div>
+					         </div>
+					
+					         <!-- 인증번호 입력 -->
+					         <div class="inputInfo">
+					             <label for="certNum" class="info-label">
+					                 SMS 인증번호
+					                 <!--<span class="required"><i class="hidden">필수항목</i></span>-->
+					             </label>
+				                 <div class="custom-info inBtn">
+				                     <input id="myAuthNum" name="certNum" placeholder="인증번호 6자리 입력" maxlength="6" type="tel" class="custom-inp" onkeyup="validate.inputNumCheck(this)" autocomplete="off" disabled>
+				                     <div class="btn-group exTime">
+				                         <p class="time-txt hidden" id="myAuthTimer"><span class="t-special" id="myRemainTime">03:00</span></p>
+				                         <button title="시간연장하기" class="request-btn hidden" id="myExtendTime"><span class="">시간연장하기</span></button>
+				                     </div>
+				                 </div>
+				                 <p class="error-txt hidden">인증번호를 입력해 주세요.</p>
+				                 <p class="error-txt time-error hidden">인증번호가 만료되었습니다. 다시 요청해주시기 바랍니다.</p>
+					         </div>
+					         
+					         <!-- 동의 -->
+				             <div class="inputInfo">
+			               		 <div class="check-box">
+				                     <input type="checkbox" name="privateAgree" id="smsAgreeChk">
+				                     <label for="privateAgree" class="t-checkbox">
+				                         <i class="icon"></i>
+				                         <span class="text">휴대폰 인증시 수집된 개인정보(성명, 생년월일, 성별, 휴대폰번호)는 개인정보 수집 이용정책과 같이 활용됨을 동의함</span>
+				                     </label>
+				                     <div class="content-row">
+			                            <div class="info-btn agree-open" id="myInfoGuide"><a href="#" class="btn-arrow">개인정보 수집 이용 안내</a></div>
+			                        </div>
+				                 </div>
+				             </div>
+				    	</div>
+			        </div>
+			        <div class="pop-footer">
+			            <div class="btn-group">
+			                <button class="standard" id="confAuthBtn" disabled>인증하기</button>
+			            </div>
+			        </div>
+			    </div>
+			</div>
+	    </div>
+	    <!--SMS 본인인증 팝업 END-->
+	    
+	    <!--개인정보 수집 이용 안내 팝업-->
+	    <div class="popup popup-2 agree d-popup hidden" id="perInfoGuidePopup">
+	        <div class="pop-wrap">
+	            <div class="pop-content">
+	                <div class="pop-header">
+	                    <h1 class="pop-tit">개인정보 수집 및 이용에 대한 동의</h1>
+	                    <button class="c-btn d-close">닫기</button>
+	                </div>
+	                <div class="pop-body">
+	                   <div class="content-section">
+	                        <ul class="pop-list">
+	                           <li class="list-tit">개인정보활용동의서</li>
+	                           <li>회사는 이용 고객에게 휴대폰 본인확인서비스 제공을 위해 다음과 같이 개인정보를 활용합니다.</li>
+	                       </ul>
+	                   </div>
+	                   <div class="content-section">
+	                       <ul class="pop-list">
+	                           <li class="list-tit">1. 개인정보 수집 및 이용 동의</li>
+	                           <li>1) 수집항목 : 성명, 생년월일, 성별, 휴대폰번호, 운영체제(OS), 모델명, U+앱 버전 등 기기정보, sqUID(이용자가 사용하는 브라우저에서 임의로 생성한 암호화된 유저의 고유 식별값), 이용자의 방문페이지 정보, 활동 로그 및 검색 이력 등 행태정보, 고객번호, 가입번호</li>
+	                           <li>2) 수집·이용목적 : 서비스 이용에 따른 본인확인 및 가입자 식별, 홈페이지 회원서비스 제공을 위한 회원인증 및 확인, 이용자의 온라인 행동 및 관심에 기반한 맞춤형 컨텐츠 제공</li>
+	                           <li>3) 보유·이용기간 : <span>이용자의 마지막 접속일로부터 12개월까지 보유 및 이용합니다. 회원일 경우 회원 가입 및 탈퇴한 날로부터 6개월동안 보유 및 이용</span> 후 폐기합니다. 단, 소송이나 분쟁 등의 특정한 이유가 있을 때에는 이의 해결시점까지 보유하며, 해당 법령 규정에 의거하여 보존 필요성이 있는 경우에는 보관합니다.</li>
+	                       </ul>
+	                   </div>
+	                   <div class="content-section">
+	                       <ul class="pop-list">
+	                           <li class="list-tit">2. 동의 거부권 및 미 동의에 대한 불이익 안내</li>
+	                           <li>고객님께서 정부 주체로서 개인정보 동의 거부권이 있으시며, 미동의 시 서비스 가입·이용에 제약이 있을 수 있고 미동의 하신 경우 정보가 제공되지 않습니다.</li>
+	                       </ul>
+	                   </div>
+	                </div>
+	                <div class="pop-footer">
+	                    <div class="btn-group">
+	                        <button class="standard d-close">확인</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!--개인정보 수집 이용 안내 팝업 END-->
+	    
+	    <!--SMS 본인인증 확인 팝업-->
+	    <div class="popup popup-1 hidden d-popup" id="smsAuthSuccess">
+	        <div class="pop-wrap">
+	            <div class="pop-content">
+	                <div class="pop-header">
+	                    <h1 class="pop-tit">확인</h1>
+	                </div>
+	                <div class="pop-body">
+	                    <p class="pop-txt">
+	                        본인인증에 성공했습니다.<br>
+	                        계속 진행하시려면 확인을 눌러주세요.
+	                    </p>
+	                </div>
+	                <div class="pop-footer">
+	                    <div class="btn-group">
+	                        <button class="standard" id="smsAuthOk">확인</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!--SMS 본인확인 팝업 END-->
+	    
+	    <!--취소 팝업-->
+	    <div class="popup popup-1 hidden d-popup" id="endPopup">
+	        <div class="pop-wrap">
+	            <div class="pop-content">
+	                <div class="pop-header">
+	                    <h1 class="pop-tit">확인</h1>
+	                    <button class="c-btn d-close">닫기</button>
+	                </div>
+	                <div class="pop-body">
+	                    <p class="pop-txt">눈으로 보는 콜봇 서비스를 종료하고 기존 콜봇 서비스로 이동합니다.</p>
+	                </div>
+	                <div class="pop-footer">
+	                    <div class="btn-group">
+	                        <button class="standard" id="svcEndOk">확인</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!--취소 팝업 END-->
+	    
+	    <!--안내 팝업-->
+	    <div class="popup popup-1 hidden d-popup" id="infoPopup">
+	        <div class="pop-wrap">
+	            <div class="pop-content">
+	                <div class="pop-header">
+	                    <h1 class="pop-tit">확인</h1>
+	                </div>
+	                <div class="pop-body">
+	                    <p class="pop-txt" id="infoTxt"></p>
+	                </div>
+	                <div class="pop-footer">
+	                    <div class="btn-group">
+	                        <button class="standard d-okBtn" id="infoOk">확인</button>
+							<button class="standard hidden" id="endInfoOk">확인</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!--안내 팝업 END-->
+	    
+	    <!--타임아웃 안내 팝업-->
+	    <div class="popup popup-1 hidden d-popup" id="timoutPopup">
+	        <div class="pop-wrap">
+	            <div class="pop-content">
+	                <div class="pop-header">
+	                    <h1 class="pop-tit">확인</h1>
+	                </div>
+	                <div class="pop-body">
+	                    <p class="pop-txt">
+	                    	입력시간이 초과되었습니다.<br>
+			                일정시간 서비스 이용이 없을 경우 고객님의 안전한 개인정보 보호를 위해 
+			                눈으로 보는 콜봇 서비스를 종료하고 기존 콜봇 서비스로 이동됩니다.
+	                    </p>
+	                </div>
+	                <div class="pop-footer">
+	                    <div class="btn-group">
+	                        <button class="standard d-okBtn">확인</button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <!--타임아웃 안내 팝업 END-->
+	</div>
+	<!--모달 팝업 영역 END-->
+</th:block>
+</html>
